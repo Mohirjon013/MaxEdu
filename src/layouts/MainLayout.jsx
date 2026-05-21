@@ -1,0 +1,435 @@
+import React, { useState } from "react";
+import { useNavigate, useLocation, Outlet } from "react-router-dom";
+import bellImg from '../assets/images/bell.png'
+import logoImg from '../assets/images/max-logo.png'
+import {
+  Box,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  Typography,
+  IconButton,
+  Button,
+  InputBase,
+  Avatar,
+  Paper,
+  Tooltip,
+} from "@mui/material";
+import {
+  Home,
+  Person,
+  Group,
+  Diamond,
+  CardGiftcard,
+  Settings,
+  Public,
+  ChevronLeft,
+  CalendarMonthOutlined,
+  SearchRounded,
+  NotificationsNoneOutlined,
+  DarkModeOutlined,
+  KeyboardArrowDownRounded,
+  LogoutOutlined,
+  AutorenewOutlined,
+  KeyboardArrowDown,
+  CategoryOutlined,
+  MeetingRoomOutlined,
+  DomainOutlined,
+  LocalOfferOutlined,
+  AccountTreeOutlined,
+  MonetizationOnOutlined,
+  ChatBubbleOutlineOutlined,
+  HelpOutlineOutlined,
+  SecurityOutlined,
+  MenuBookOutlined,
+  BadgeOutlined,
+  SendOutlined,
+  Add,
+  School,
+} from "@mui/icons-material";
+
+const SIDEBAR_WIDTH = 280;
+const COLLAPSED_WIDTH = 88;
+const PURPLE_MAIN = "#6B4BE8";
+
+const menuItems = [
+  { text: "Asosiy", icon: <Home />, path: "/dashboard" },
+  { text: "O'qituvchilar", icon: <Person />, path: "/dashboard/teacher" },
+  { text: "Guruhlar", icon: <Group />, path: "/dashboard/groups" },
+  { text: "Talabalar", icon: <Diamond />, path: "/dashboard/students" },
+  { text: "Sovg'alar", icon: <CardGiftcard />, path: "/dashboard/gifts" },
+  { text: "Boshqarish", icon: <Settings />, path: "/management" },
+];
+
+const subMenuItems = [
+  { text: "Kurslar", icon: <MenuBookOutlined />, path: "/management/course" },
+  { text: "Xonalar", icon: <MeetingRoomOutlined />, path: "/management/room" },
+  { text: "Hodimlar", icon: <BadgeOutlined /> },
+  { text: "Coin", icon: <MonetizationOnOutlined /> },
+  { text: "Xabar Yuborish", icon: <SendOutlined /> },
+];
+
+export default function MainLayout() {
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const [collapsed, setCollapsed] = useState(false);
+  const [managementOpen, setManagementOpen] = useState(pathname === "/management");
+
+  const sidebarW = collapsed ? COLLAPSED_WIDTH : SIDEBAR_WIDTH;
+
+  const handleMenuClick = (item) => {
+    if (item.text === "Boshqarish") {
+      setManagementOpen(true);
+      navigate("/management");
+    } else {
+      setManagementOpen(false);
+      navigate(item.path);
+    }
+  };
+
+  return (
+    <Box sx={{ display: "flex", height: "100vh", backgroundColor: "#F9FAFB", overflow: "hidden", fontFamily: "Roboto, sans-serif", position: "relative" }}>
+
+      {/* ════ SIDEBAR ════ */}
+      <Drawer
+        variant="permanent"
+        sx={{
+          width: sidebarW,
+          flexShrink: 0,
+          "& .MuiDrawer-paper": {
+            width: sidebarW,
+            boxSizing: "border-box",
+            borderRight: "1px solid #E5E7EB",
+            backgroundColor: "#FFFFFF",
+            borderRadius: "0 24px 24px 0",
+            transition: "width 0.3s cubic-bezier(0.4,0,0.2,1)",
+            overflowX: "hidden", // FIXED SCROLLBAR ISSUE
+            display: "flex",
+            flexDirection: "column",
+            zIndex: 10,
+          },
+        }}
+      >
+        {/* Logo Area */}
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "flex-start", px: collapsed ? 0 : 3, pt: 1, pb: 1, minHeight: 70, borderBottom: "1px solid #D1D5DC", mb: 4 }}>
+          <Box
+            onClick={() => navigate("/dashboard")}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1.5,
+              cursor: "pointer",
+              transition: "opacity 0.2s"
+            }}
+          >
+            <School sx={{ fontSize: 40, color: PURPLE_MAIN }} />
+            {!collapsed && (
+              <Typography sx={{ fontWeight: 700, fontSize: 22, color: PURPLE_MAIN, letterSpacing: "-0.5px" }}>
+                MaxEdu
+              </Typography>
+            )}
+          </Box>
+        </Box>
+
+        {/* Menu Items */}
+        <Box sx={{ flex: 1, px: collapsed ? 2 : 1.5, display: "flex", flexDirection: "column", gap: 1 }}>
+          <List disablePadding>
+            {menuItems.map((item) => {
+              const isActive = pathname === item.path || (item.text === "Boshqarish" && pathname.startsWith("/management"));
+              return (
+                <ListItem key={item.text} disablePadding sx={{ mb: 1, justifyContent: "center" }}>
+                  <Tooltip title={collapsed ? item.text : ""} placement="right" arrow>
+                    <ListItemButton
+                      onClick={() => handleMenuClick(item)}
+                      sx={{
+                        minHeight: 47,
+                        width: "100%",
+                        justifyContent: collapsed ? "center" : "flex-start",
+                        px: collapsed ? 0 : 2,
+                        py: 1,
+                        borderRadius: "14px",
+                        backgroundColor: isActive ? PURPLE_MAIN : "transparent",
+                        color: isActive ? "#FFF" : "#4B5563",
+                        "&:hover": {
+                          backgroundColor: isActive ? PURPLE_MAIN : "#F3E8FF", // Light purple background
+                        },
+                        "&:hover .menu-icon": {
+                          color: isActive ? "#FFF" : PURPLE_MAIN,
+                        },
+                        "&:hover .menu-text": {
+                          color: isActive ? "#FFF" : PURPLE_MAIN,
+                        },
+                        transition: "all 0.3s ease",
+                      }}
+                    >
+                      <ListItemIcon
+                        className="menu-icon"
+                        sx={{
+                          minWidth: 0,
+                          mr: collapsed ? 0 : 2.5,
+                          justifyContent: "center",
+                          color: isActive ? "#FFF" : "#6B7280",
+                          transition: "color 0.3s ease",
+                        }}
+                      >
+                        {React.cloneElement(item.icon, { sx: { fontSize: 24 } })}
+                      </ListItemIcon>
+                      {!collapsed && (
+                        <Typography
+                          className="menu-text"
+                          sx={{
+                            fontSize: 15,
+                            fontWeight: isActive ? 600 : 500,
+                            color: isActive ? "#FFF" : "#111827",
+                            flex: 1,
+                            transition: "color 0.3s ease",
+                          }}
+                        >
+                          {item.text}
+                        </Typography>
+                      )}
+                    </ListItemButton>
+                  </Tooltip>
+                </ListItem>
+              );
+            })}
+          </List>
+        </Box>
+
+        {/* Subscription Card */}
+        {!collapsed && (
+          <Box sx={{ mx: 2.5, mb: 1.5, p: 1.5, borderRadius: "16px", backgroundColor: "#FCEDED", border: "1px solid #FAD4D4" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+              {/* Bell emoji for 3D look */}
+              <img src={bellImg} alt="bell-img" width={35} height={35} />
+              <Box>
+                <Typography sx={{ fontSize: 15, fontWeight: 700, color: "#111827", lineHeight: 1.2, mb: 0.5 }}>
+                  Obuna
+                </Typography>
+                <Typography sx={{ fontSize: 13, fontWeight: 500, color: "#EF4444", lineHeight: 1.2 }}>
+                  Obunangiz tugagan
+                </Typography>
+              </Box>
+            </Box>
+            <Button
+              fullWidth
+              variant="contained"
+              startIcon={<AutorenewOutlined sx={{ fontSize: 18 }} />}
+              sx={{
+                backgroundColor: "#DC2626",
+                color: "#FFF",
+                fontSize: 14,
+                fontWeight: 600,
+                textTransform: "none",
+                py: 1.2,
+                borderRadius: "10px",
+                boxShadow: "0px 2px 4px rgba(220, 38, 38, 0.2)",
+                "&:hover": { backgroundColor: "#B91C1C" },
+              }}
+            >
+              Obunani yangilash
+            </Button>
+          </Box>
+        )}
+
+        {/* Logout */}
+        <Box sx={{ px: collapsed ? 2 : 3, mb: 1.5 }}>
+          <Tooltip title={collapsed ? "Chiqish" : ""} placement="right" arrow>
+            <ListItemButton
+              onClick={() => {
+                localStorage.removeItem("token");
+                navigate("/login");
+              }}
+              sx={{
+                minHeight: 52,
+                width: "100%",
+                justifyContent: collapsed ? "center" : "flex-start",
+                px: collapsed ? 0 : 2.5,
+                borderRadius: "14px",
+                color: "#6B7280",
+                "&:hover": { backgroundColor: "#FEF2F2", color: "#EF4444" },
+                transition: "all 0.3s ease",
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 0, mr: collapsed ? 0 : 2.5, justifyContent: "center", color: "inherit" }}>
+                <LogoutOutlined sx={{ fontSize: 24 }} />
+              </ListItemIcon>
+              {!collapsed && (
+                <Typography sx={{ fontSize: 15, fontWeight: 500, flex: 1 }}>
+                  Chiqish
+                </Typography>
+              )}
+            </ListItemButton>
+          </Tooltip>
+        </Box>
+      </Drawer>
+
+      {/* ════ COLLAPSE BUTTON - PLACED OUTSIDE DRAWER TO PREVENT SCROLLBAR ════ */}
+      <IconButton
+        onClick={() => setCollapsed(!collapsed)}
+        sx={{
+          position: "absolute",
+          left: sidebarW - 16, // AT THE EXACT BORDER LINE
+          top: 40, // CENTERED VERTICALLY IN THE LOGO AREA (minHeight: 80 / 2)
+          transform: "translateY(-50%)",
+          zIndex: 11, // Ustiga chiqib qolmasligi uchun 1300 dan 11 ga tushirildi
+          width: 32,
+          height: 32,
+          borderRadius: "10px",
+          backgroundColor: PURPLE_MAIN,
+          color: "#FFF",
+          "&:hover": { backgroundColor: "#5a3cd9" },
+          boxShadow: "0 2px 8px rgba(107, 75, 232, 0.3)",
+          border: "2px solid #FFF",
+          transition: "left 0.3s cubic-bezier(0.4,0,0.2,1), transform 0.3s",
+        }}
+      >
+        <ChevronLeft sx={{ fontSize: 18, transform: collapsed ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.3s" }} />
+      </IconButton>
+
+      {/* ══════════ SUB MENU DRAWER (Boshqarish) ══════════ */}
+      <Drawer
+        variant="persistent"
+        anchor="left"
+        open={managementOpen}
+        sx={{
+          width: 0,
+          flexShrink: 0,
+          "& .MuiDrawer-paper": {
+            width: 280,
+            left: sidebarW,
+            boxSizing: "border-box",
+            borderRight: "1px solid #E5E7EB",
+            backgroundColor: "#FFFFFF",
+            borderRadius: "0 24px 24px 0",
+            boxShadow: managementOpen ? "4px 0 15px rgba(0,0,0,0.05)" : "none",
+            transition: "transform 0.3s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s",
+            zIndex: 9,
+          },
+        }}
+      >
+        <Box sx={{ pb: 2, px: 3, display: "flex", flexDirection: "column", height: "100%" }}>
+          <Box sx={{ position: "relative", display: "flex", alignItems: "center", px: 3, minHeight: 80, borderBottom: "1px solid #D1D5DC", mb: 2 }}>
+
+            <Typography sx={{ fontSize: 20, fontWeight: 700, color: "#111827", letterSpacing: "-0.5px" }}>
+              Menu
+            </Typography>
+          </Box>
+          <Box sx={{ flex: 1, overflowY: "auto" }}>
+            <List disablePadding>
+              {subMenuItems.map((sub) => {
+                const isActive = pathname === sub.path;
+                return (
+                  <ListItem key={sub.text} disablePadding sx={{ mb: 0.5 }}>
+                    <ListItemButton
+                      onClick={() => {
+                        if (sub.path) {
+                          navigate(sub.path);
+                          setManagementOpen(false);
+                        }
+                      }}
+                      sx={{
+                        borderRadius: "12px",
+                        px: 2,
+                        py: 1.5,
+                        backgroundColor: isActive ? "#F3F4F6" : "transparent",
+                        color: isActive ? PURPLE_MAIN : "#4B5563",
+                        "&:hover": { backgroundColor: "#F3F4F6", color: PURPLE_MAIN },
+                        transition: "all 0.2s"
+                      }}
+                    >
+                      <ListItemIcon sx={{ minWidth: 0, mr: 2, color: "inherit" }}>
+                        {React.cloneElement(sub.icon, { sx: { fontSize: 22 } })}
+                      </ListItemIcon>
+                      <Typography sx={{ fontSize: 15, fontWeight: isActive ? 600 : 500, flex: 1 }}>
+                        {sub.text}
+                      </Typography>
+                    </ListItemButton>
+                  </ListItem>
+                );
+              })}
+            </List>
+          </Box>
+        </Box>
+      </Drawer>
+
+      {/* ════ MAIN CONTENT ════ */}
+      <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column", overflow: "hidden", position: "relative" }}>
+        {/* OVERLAY */}
+        {managementOpen && (
+          <Box
+            onClick={() => setManagementOpen(false)}
+            sx={{
+              position: "absolute",
+              top: 0, left: 0, right: 0, bottom: 0,
+              backgroundColor: "rgba(0, 0, 0, 0.15)",
+              zIndex: 8,
+              cursor: "pointer"
+            }}
+          />
+        )}
+        {/* TOP NAVBAR */}
+        <Box sx={{ position: "relative", display: "flex", alignItems: "center", px: 4, minHeight: 80, gap: 2, flexShrink: 0, backgroundColor: "#F9FAFB" }}>
+
+          {/* Calendar Button */}
+          <IconButton sx={{ width: 36, height: 36, borderRadius: "8px", backgroundColor: "#FFF", border: "1px solid #E5E7EB", boxShadow: "0 1px 2px rgba(0,0,0,0.05)", ml: 0 }}>
+            <CalendarMonthOutlined sx={{ fontSize: 20, color: "#4B5563" }} />
+          </IconButton>
+
+          {/* Plus Button */}
+          <Button
+            variant="contained"
+            startIcon={<Add sx={{ fontSize: 18 }} />}
+            endIcon={<KeyboardArrowDown sx={{ fontSize: 18 }} />}
+            sx={{
+              height: 36, px: 2, borderRadius: "8px", backgroundColor: PURPLE_MAIN, color: "#FFF",
+              fontSize: 14, fontWeight: 600, textTransform: "none", boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+              "&:hover": { backgroundColor: "#5a3cd9" },
+            }}
+          >
+            Qo'shish
+          </Button>
+
+
+          {/* Search */}
+          <Paper
+            elevation={0}
+            sx={{ display: "flex", alignItems: "center", width: 280, height: 36, px: 1.5, borderRadius: "8px", border: "1px solid #E5E7EB", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}
+          >
+            <SearchRounded sx={{ color: "#9CA3AF", fontSize: 20, mr: 1 }} />
+            <InputBase placeholder="Qidirish..." sx={{ ml: 1, flex: 1, fontSize: 14, color: "#111827" }} />
+          </Paper>
+
+          {/* Right Side */}
+          <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Button
+              endIcon={<KeyboardArrowDownRounded sx={{ color: "#6B7280" }} />}
+              sx={{
+                height: 36, px: 2, borderRadius: "8px", backgroundColor: "#FFF", border: "1px solid #E5E7EB", boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                color: "#4B5563", textTransform: "none", fontSize: 14, fontWeight: 500, "&:hover": { backgroundColor: "#F9FAFB" }
+              }}
+            >
+              O'zbekcha
+            </Button>
+            <IconButton sx={{ color: "#4B5563", ml: 1 }}>
+              <NotificationsNoneOutlined sx={{ fontSize: 22 }} />
+            </IconButton>
+            <IconButton sx={{ color: "#4B5563" }}>
+              <DarkModeOutlined sx={{ fontSize: 22 }} />
+            </IconButton>
+            <Avatar sx={{ width: 36, height: 36, backgroundColor: PURPLE_MAIN, fontSize: 16, fontWeight: 700, cursor: "pointer", ml: 1 }}>
+              A
+            </Avatar>
+          </Box>
+        </Box>
+
+        {/* PAGE CONTENT */}
+        <Box sx={{ flex: 1, overflowY: "auto", px: 4, pb: 4 }}>
+          <Outlet />
+        </Box>
+      </Box>
+    </Box>
+  );
+}
