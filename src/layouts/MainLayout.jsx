@@ -137,7 +137,9 @@ export default function MainLayout() {
         <Box sx={{ flex: 1, px: collapsed ? 2 : 1.5, display: "flex", flexDirection: "column", gap: 1 }}>
           <List disablePadding>
             {menuItems.map((item) => {
-              const isActive = pathname === item.path || (item.text === "Boshqarish" && pathname.startsWith("/management"));
+              const isActive = item.path === "/dashboard" 
+                ? pathname === "/dashboard"
+                : (item.path && pathname.startsWith(item.path));
               return (
                 <ListItem key={item.text} disablePadding sx={{ mb: 1, justifyContent: "center" }}>
                   <Tooltip title={collapsed ? item.text : ""} placement="right" arrow>

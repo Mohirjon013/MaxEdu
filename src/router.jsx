@@ -4,14 +4,14 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
 import ProtectRoute from "./components/ProtectRoute";
 import PublicRoute from "./components/PublicRoute";
-import { Login, Teacher, Groups, Student, Gifs } from "./pages/index";
+import { Login, Teacher, Groups, SingleGroups, Student, Gifs } from "./pages/index";
 
 // Lazy loading
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const ManagementCourse = lazy(() => import("./components/ManagementCourse"));
 const ManagementRoom = lazy(() => import("./components/ManagementRoom"));
-
-const Loader = () => <div style={{ padding: "20px" }}>Yuklanmoqda...</div>;
+import HomeworkCreate from "./components/HomeworkCreate";
+import Loader from "./components/Loader";
 
 const router = createBrowserRouter([
   {
@@ -56,6 +56,12 @@ const router = createBrowserRouter([
           },
           {
             path: "groups", element: <Groups />
+          },
+          {
+            path: "groups/:id", element: <SingleGroups />
+          },
+          {
+            path: "groups/:id/homework/create", element: <HomeworkCreate />
           },
           {
             path: "students", element: <Student />

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -23,6 +24,8 @@ import {
   MenuItem,
   Checkbox,
   Select,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import GroupsIcon from '@mui/icons-material/Groups';
 import SchoolIcon from '@mui/icons-material/School';
@@ -31,6 +34,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ArchiveIcon from '@mui/icons-material/Archive';
 import CloseIcon from '@mui/icons-material/Close';
+import axiosClient from '../api/axios';
 
 const theme = createTheme({
   palette: {
@@ -81,95 +85,224 @@ const inputSx = {
   },
 };
 
-const groups = [
-  {
-    id: 1,
-    name: 'N26',
-    kurs: 'Backend',
-    davomiyligi: '6 oy',
-    darsVaqti: '09:30',
-    kunlar: 'Du, Se, Chor, Pay, Ju',
-    xona: 'Autodesk',
-    oqituvchi: 'Mohirbek',
-    talabalar: 1,
-    faol: true,
-    studentAvatars: ['https://i.pravatar.cc/150?img=1'],
-  },
-  {
-    id: 2,
-    name: 'n105',
-    kurs: 'Backend',
-    davomiyligi: '6 oy',
-    darsVaqti: '16:00',
-    kunlar: 'Se, Pay, Shan',
-    xona: 'Autodesk',
-    oqituvchi: 'Mohirbek',
-    talabalar: 4,
-    faol: true,
-    studentAvatars: [
-      'https://i.pravatar.cc/150?img=2',
-      'https://i.pravatar.cc/150?img=3',
-      'https://i.pravatar.cc/150?img=4',
-    ],
-  },
-];
+
 
 function Groups() {
+  const navigate = useNavigate();
+  const [groups, setGroups] = useState([])
+  const [courses, setCourses] = useState([])
+  const [availableTeacherss, setAvailableTeacherss] = useState([])
+  const [availableStudents, setAvailableStudents] = useState([])
+  const [availableRooms, setAvailableRooms] = useState([])
+  const [errorMsg, setErrorMsg] = useState('')
+
+
+
   const [activeTab, setActiveTab] = useState('guruhlar');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedDays, setSelectedDays] = useState([]);
-  const [selectedKurs, setSelectedKurs] = useState('');
-  const [selectedDavomiylik, setSelectedDavomiylik] = useState('');
-  const [selectedXona, setSelectedXona] = useState('');
 
-  // Form states
-  const [groupName, setGroupName] = useState('');
-  const [groupTime, setGroupTime] = useState('09:00');
-  const [groupStartDate, setGroupStartDate] = useState('');
-  const [groupDesc, setGroupDesc] = useState('');
+
 
   // Teacher modal
   const [isTeacherModalOpen, setIsTeacherModalOpen] = useState(false);
   const [selectedTeachers, setSelectedTeachers] = useState([]);
   const [teacherSearch, setTeacherSearch] = useState('');
 
+  const filteredTeachers = availableTeacherss.filter(t =>
+    t.full_name.toLowerCase().includes(teacherSearch.toLowerCase())
+  );
+  const toggleTeacher = (id) => setSelectedTeachers(prev => {
+    const updated = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
+    setCreateGroup(p => ({ ...p, teachers: updated }));
+    return updated;
+  });
+
   // Student modal
   const [isStudentModalOpen, setIsStudentModalOpen] = useState(false);
   const [selectedStudents, setSelectedStudents] = useState([]);
   const [studentSearch, setStudentSearch] = useState('');
 
-  const availableTeachers = ['Mohirbek'];
-  const availableStudents = ['Ali Valiyev', 'Salim Qodirov', 'Bobur', 'Qodir Salimov'];
 
-  const filteredTeachers = availableTeachers.filter(t =>
-    t.toLowerCase().includes(teacherSearch.toLowerCase())
-  );
+
+
   const filteredStudents = availableStudents.filter(s =>
-    s.toLowerCase().includes(studentSearch.toLowerCase())
+    s.full_name.toLowerCase().includes(studentSearch.toLowerCase())
   );
+  const toggleStudent = (id) => setSelectedStudents(prev => {
+    const updated = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
+    setCreateGroup(p => ({ ...p, students: updated }));
+    return updated;
+  });
 
-  const toggleTeacher = (t) => setSelectedTeachers(prev =>
-    prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]
-  );
-  const toggleStudent = (s) => setSelectedStudents(prev =>
-    prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]
-  );
 
-  const [groupStatuses, setGroupStatuses] = useState(
-    groups.reduce((acc, g) => ({ ...acc, [g.id]: g.faol }), {})
-  );
 
-  const days = ['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba', 'Yakshanba'];
+
+
+  const [groupStatuses, setGroupStatuses] = useState({});
+
+  const [createGroup, setCreateGroup] = useState({
+    name: '',
+    description: '',
+    course_id: null,
+    teachers: [],        // [id, id, ...]
+    students: [],        // bo'sh bo'lsa []
+    room_id: null,
+    start_date: '',      // "2026-01-01"
+    week_day: [],        // ["MONDAY", "WEDNESDAY"]
+    start_time: '',      // "09:00"
+    max_student: null
+  })
+
+
+  const days = [
+    { label: 'Dushanba', value: 'MONDAY' },
+    { label: 'Seshanba', value: 'TUESDAY' },
+    { label: 'Chorshanba', value: 'WEDNESDAY' },
+    { label: 'Payshanba', value: 'THURSDAY' },
+    { label: 'Juma', value: 'FRIDAY' },
+    { label: 'Shanba', value: 'SATURDAY' },
+    { label: 'Yakshanba', value: 'SUNDAY' },
+  ]
+
 
   const toggleDay = (day) => {
-    setSelectedDays(prev =>
-      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
-    );
+    setSelectedDays(prev => {
+      const updated = prev.includes(day.value)
+        ? prev.filter(d => d !== day.value)
+        : [...prev, day.value];
+
+      setCreateGroup(p => ({ ...p, week_day: updated })); // ← createGroup ga ham yozadi
+      return updated;
+    });
   };
 
-  const toggleStatus = (id) => {
-    setGroupStatuses(prev => ({ ...prev, [id]: !prev[id] }));
+  const toggleStatus = async (id) => {
+    const currentStatus = groupStatuses[id];
+    setGroupStatuses(prev => ({ ...prev, [id]: !currentStatus }));
+    try {
+      await axiosClient.patch(`/groups/${id}`, { is_active: !currentStatus });
+    } catch (err) {
+      console.error("Statusni yangilashda xatolik:", err);
+      setGroupStatuses(prev => ({ ...prev, [id]: currentStatus }));
+      setErrorMsg("Statusni yangilashda xatolik yuz berdi");
+    }
   };
+
+
+
+
+
+
+  useEffect(() => {
+    async function handleGroups() {
+      try {
+        const [groupsRes, coursesRes, teachersRes, studentRes, roomsRes] = await Promise.all([
+          axiosClient.get('/groups/all'),
+          axiosClient.get('/courses'),
+          axiosClient.get('/teachers'),
+          axiosClient.get('/students'),
+          axiosClient.get('/rooms'),
+        ])
+        const fetchedGroups = groupsRes.data.data
+        console.log(fetchedGroups);
+
+        setGroups(fetchedGroups)
+        setCourses(coursesRes.data.data)
+        setAvailableTeacherss(teachersRes.data.data)
+        setAvailableStudents(studentRes.data.data)
+        setAvailableRooms(roomsRes.data.data)
+        // groupStatuses ni API dan kelgan ma'lumotlar bilan to'ldirish
+        setGroupStatuses(fetchedGroups.reduce((acc, g) => ({ ...acc, [g.id]: g.is_active ?? true }), {}))
+      } catch (err) {
+        console.error(err)
+        setErrorMsg('Ma\'lumotlarni yuklashda xato yuz berdi: ' + (err.response?.data?.message || err.message))
+      }
+    }
+    handleGroups()
+  }, [])
+
+  const handleCloseDrawer = () => {
+    setIsDrawerOpen(false);
+    setCreateGroup({
+      name: '',
+      description: '',
+      course_id: null,
+      teachers: [],
+      students: [],
+      room_id: null,
+      start_date: '',
+      week_day: [],
+      start_time: '',
+      max_student: null
+    });
+    setSelectedDays([]);
+    setSelectedTeachers([]);
+    setSelectedStudents([]);
+    setTeacherSearch('');
+    setStudentSearch('');
+  };
+
+  async function createGroups() {
+    console.log('Yuborilayotgan data:', createGroup)
+    try {
+      // API ga yuborishdan oldin payloadni tozalash
+      // null, NaN, bo'sh string qiymatlarni olib tashlash
+      let finalStartTime = createGroup.start_time;
+      if (finalStartTime && finalStartTime.length === 5) {
+        finalStartTime += ':00';
+      }
+
+      const payload = {
+        ...createGroup,
+        start_time: finalStartTime || undefined,
+        course_id: createGroup.course_id ?? undefined,
+        room_id: createGroup.room_id ?? undefined,
+        max_student: (createGroup.max_student && !isNaN(createGroup.max_student))
+          ? Number(createGroup.max_student)
+          : undefined,
+      }
+      // undefined bo'lgan fieldlarni olib tashlaymiz
+      Object.keys(payload).forEach(key => payload[key] === undefined && delete payload[key])
+
+      const res = await axiosClient.post('/groups', payload)
+
+      if (res.status === 201 || res.status === 200) {
+        const groupsRes = await axiosClient.get('/groups/all')
+        const fetchedGroups = groupsRes.data.data
+        setGroups(fetchedGroups)
+        setGroupStatuses(prev => ({
+          ...prev,
+          ...fetchedGroups.reduce((acc, g) => ({ ...acc, [g.id]: g.is_active ?? true }), {})
+        }))
+        handleCloseDrawer()
+      }
+    } catch (err) {
+      console.error(err)
+      // Server xato xabarini ko'rsatish
+      const serverMsg = err.response?.data?.message
+        || err.response?.data?.error
+        || err.message
+        || 'Guruh qo\'shishda xato yuz berdi'
+      setErrorMsg(serverMsg)
+    }
+  }
+
+
+  const WEEK_MAP = {
+    MONDAY: 'Du',
+    TUESDAY: 'Se',
+    WEDNESDAY: 'Chor',
+    THURSDAY: 'Pay',
+    FRIDAY: 'Ju',
+    SATURDAY: 'Shan',
+    SUNDAY: 'Yak'
+  }
+
+  function getGroupInfo(e) {
+    setCreateGroup(prev => ({ ...prev, [e.target.name]: e.target.value }))
+  }
+
 
   return (
     <ThemeProvider theme={theme}>
@@ -264,7 +397,7 @@ function Groups() {
             </Box>
             <Box>
               <Typography sx={{ fontSize: '13px', color: '#6b7280', mb: 0.5, fontWeight: 500 }}>O'qituvchilar</Typography>
-              <Typography sx={{ fontSize: '28px', fontWeight: 700, color: '#111827', lineHeight: 1 }}>0</Typography>
+              <Typography sx={{ fontSize: '28px', fontWeight: 700, color: '#111827', lineHeight: 1 }}>{new Set(groups.flatMap(g => (g.teachers || []).map(t => t.id))).size}</Typography>
             </Box>
           </Paper>
 
@@ -281,7 +414,7 @@ function Groups() {
             <Box sx={{ display: 'flex', flexDirection: 'column' }}>
               <Typography sx={{ fontSize: '13px', color: '#6b7280', mb: 0.5, fontWeight: 500 }}>O'quvchilar</Typography>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                <Typography sx={{ fontSize: '28px', fontWeight: 700, color: '#111827', lineHeight: 1 }}>0</Typography>
+                <Typography sx={{ fontSize: '28px', fontWeight: 700, color: '#111827', lineHeight: 1 }}>{groups.reduce((sum, g) => sum + (g.student_count || 0), 0)}</Typography>
                 <AvatarGroup max={3} sx={{ '& .MuiAvatar-root': { width: 24, height: 24, fontSize: '10px', border: '2px solid #fff', fontWeight: 600 } }}>
                   <Avatar sx={{ bgcolor: '#1e1b4b', color: '#fff' }}>I</Avatar>
                   <Avatar sx={{ bgcolor: '#ea580c', color: '#fff' }}>M</Avatar>
@@ -293,21 +426,27 @@ function Groups() {
         </Box>
 
         {/* Table */}
-        <Paper sx={{ borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
-          <TableContainer>
-            <Table sx={{ minWidth: 900 }}>
+        <Paper sx={{ height: '480px', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <TableContainer sx={{
+            flex: 1, overflowY: 'auto',
+            '&::-webkit-scrollbar': { width: '4px' },
+            '&::-webkit-scrollbar-track': { background: 'transparent' },
+            '&::-webkit-scrollbar-thumb': { background: '#e5e7eb', borderRadius: '10px' },
+            '&::-webkit-scrollbar-thumb:hover': { background: '#d1d5db' },
+          }}>
+            <Table sx={{ minWidth: 900 }} stickyHeader>
               <TableHead sx={{ bgcolor: '#fafafa' }}>
                 <TableRow>
-                  <TableCell align="center" sx={{ fontWeight: 600, color: '#555', fontSize: '13px' }}>Status</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 600, color: '#555', fontSize: '13px' }}>Guruh nomi</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 600, color: '#555', fontSize: '13px' }}>Kurs</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 600, color: '#555', fontSize: '13px' }}>Davomiyligi</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 600, color: '#555', fontSize: '13px' }}>Dars vaqti</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 600, color: '#555', fontSize: '13px' }}>Xona</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 600, color: '#555', fontSize: '13px' }}>O'qituvchi</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 600, color: '#555', fontSize: '13px' }}>Talabalar</TableCell>
-                  <TableCell align="right">
-                    <IconButton size="small" sx={{ color: '#888' }}>
+                  <TableCell align="center" sx={{ fontWeight: 600, color: '#555', fontSize: '13px', bgcolor: '#fafafa' }}>Status</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 600, color: '#555', fontSize: '13px', bgcolor: '#fafafa' }}>Guruh nomi</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 600, color: '#555', fontSize: '13px', bgcolor: '#fafafa' }}>Kurs</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 600, color: '#555', fontSize: '13px', bgcolor: '#fafafa' }}>Davomiyligi</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 600, color: '#555', fontSize: '13px', bgcolor: '#fafafa' }}>Dars vaqti</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 600, color: '#555', fontSize: '13px', bgcolor: '#fafafa' }}>Xona</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 600, color: '#555', fontSize: '13px', bgcolor: '#fafafa' }}>O'qituvchi</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 600, color: '#555', fontSize: '13px', bgcolor: '#fafafa' }}>Talabalar</TableCell>
+                  <TableCell align="right" sx={{ bgcolor: '#fafafa' }}>
+                    <IconButton size="small" sx={{ color: '#888', }}>
                       <RefreshIcon fontSize="small" />
                     </IconButton>
                   </TableCell>
@@ -315,13 +454,14 @@ function Groups() {
               </TableHead>
               <TableBody>
                 {groups.map((group) => (
-                  <TableRow key={group.id} hover sx={{ '& td': { borderBottom: '1px solid #eee' } }}>
+                  <TableRow key={group.id} hover onClick={() => navigate(`/dashboard/groups/${group.id}`)} sx={{ cursor: 'pointer', '& td': { borderBottom: '1px solid #eee' } }}>
                     {/* Status */}
                     <TableCell align="center">
                       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5 }}>
                         <Switch
                           checked={groupStatuses[group.id]}
-                          onChange={() => toggleStatus(group.id)}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => { e.stopPropagation(); toggleStatus(group.id); }}
                           size="small"
                           color="primary"
                         />
@@ -348,7 +488,7 @@ function Groups() {
                     {/* Kurs */}
                     <TableCell align="center">
                       <Chip
-                        label={group.kurs}
+                        label={group.course?.name || '—'}
                         size="small"
                         sx={{
                           bgcolor: '#fce7f3', color: '#db2777',
@@ -358,36 +498,38 @@ function Groups() {
                     </TableCell>
 
                     {/* Davomiyligi */}
-                    <TableCell align="center" sx={{ color: '#555', fontSize: '14px' }}>{group.davomiyligi}</TableCell>
+                    <TableCell align="center" sx={{ color: '#555', fontSize: '14px' }}>{group.course?.duration_month || 0} oy</TableCell>
 
                     {/* Dars vaqti */}
                     <TableCell align="center">
                       <Typography sx={{ fontWeight: 600, color: '#1a1a1a', fontSize: '14px' }}>
-                        {group.darsVaqti}
+                        {(group.start_time || group.time || group.class_time || '')?.slice(0, 5)}
                       </Typography>
                       <Typography sx={{ fontSize: '12px', color: '#888' }}>
-                        {group.kunlar}
+                        {group.week_day?.map(day => WEEK_MAP[day]).join(', ')}
                       </Typography>
                     </TableCell>
 
                     {/* Xona */}
-                    <TableCell align="center" sx={{ color: '#555', fontSize: '14px' }}>{group.xona}</TableCell>
+                    <TableCell align="center" sx={{ color: '#555', fontSize: '14px' }}>
+                      {group.room?.name ?? group.room ?? '—'}
+                    </TableCell>
 
                     {/* O'qituvchi */}
                     <TableCell align="center">
                       <Typography sx={{ fontWeight: 600, color: '#1a1a1a', fontSize: '14px' }}>
-                        {group.oqituvchi}
+                        {group.teachers?.length > 0 ? group.teachers[0].full_name : '—'}
                       </Typography>
                     </TableCell>
 
                     {/* Talabalar */}
                     <TableCell align="center" sx={{ color: '#555', fontSize: '14px', fontWeight: 500 }}>
-                      {group.talabalar}
+                      {group.student_count}
                     </TableCell>
 
                     {/* Actions */}
                     <TableCell align="right">
-                      <IconButton size="small" sx={{ color: '#888', '&:hover': { color: '#7C3AED' } }}>
+                      <IconButton size="small" onClick={(e) => e.stopPropagation()} sx={{ color: '#888', '&:hover': { color: '#7C3AED' } }}>
                         <MoreVertIcon fontSize="small" />
                       </IconButton>
                     </TableCell>
@@ -402,13 +544,13 @@ function Groups() {
         <Drawer
           anchor="right"
           open={isDrawerOpen}
-          onClose={() => setIsDrawerOpen(false)}
+          onClose={handleCloseDrawer}
           sx={{ zIndex: 9999, '& .MuiDrawer-paper': { width: { xs: '100%', sm: 400 }, display: 'flex', flexDirection: 'column', boxSizing: 'border-box' } }}
         >
           {/* Drawer Header */}
           <Box sx={{ p: 3, pb: 2, borderBottom: '1px solid #e5e7eb', position: 'relative' }}>
             <IconButton
-              onClick={() => setIsDrawerOpen(false)}
+              onClick={handleCloseDrawer}
               sx={{ position: 'absolute', right: 16, top: 16, color: '#9ca3af', '&:hover': { color: '#111827' } }}
             >
               <CloseIcon fontSize="small" />
@@ -421,9 +563,9 @@ function Groups() {
             </Typography>
           </Box>
 
+
           {/* Drawer Body */}
           <Box sx={{ p: 3, flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-
             {/* Guruh nomi */}
             <Box>
               <Typography sx={{ fontSize: '13px', fontWeight: 600, color: '#111827', mb: 1 }}>
@@ -431,11 +573,11 @@ function Groups() {
               </Typography>
               <TextField
                 fullWidth
+                name='name'
+                value={createGroup.name}
                 placeholder="Frontend 2024"
                 size="small"
-                value={groupName}
-                onChange={(e) => setGroupName(e.target.value)}
-
+                onChange={getGroupInfo}
               />
             </Box>
 
@@ -445,20 +587,20 @@ function Groups() {
                 Kurs
               </Typography>
               <Select
+                name='course_id'
+                value={createGroup.course_id ?? ''}
                 displayEmpty
                 fullWidth
-                value={selectedKurs}
-                onChange={(e) => setSelectedKurs(e.target.value)}
+                onChange={(e) => setCreateGroup(p => ({ ...p, course_id: e.target.value ? Number(e.target.value) : null }))}
                 size="small"
                 MenuProps={{ style: { zIndex: 99999 } }}
               >
                 <MenuItem value="" disabled><em style={{ color: '#9ca3af', fontStyle: 'normal' }}>Kursni tanlang</em></MenuItem>
-                <MenuItem value="Frontend">Frontend</MenuItem>
-                <MenuItem value="Backend">Backend</MenuItem>
-                <MenuItem value="FullStack">Full Stack</MenuItem>
-                <MenuItem value="Python">Python</MenuItem>
-                <MenuItem value="Mobile">Mobile (Flutter)</MenuItem>
-                <MenuItem value="UI/UX">UI/UX Design</MenuItem>
+                {
+                  courses.map((item) => (
+                    <MenuItem key={item.id} value={item.id}>{item.name}</MenuItem>
+                  ))
+                }
               </Select>
             </Box>
 
@@ -467,23 +609,14 @@ function Groups() {
               <Typography sx={{ fontSize: '13px', fontWeight: 600, color: '#111827', mb: 1 }}>
                 Davomiyligi
               </Typography>
-              <Select
-                displayEmpty
-                fullWidth
-                value={selectedDavomiylik}
-                onChange={(e) => setSelectedDavomiylik(e.target.value)}
-                size="small"
-                MenuProps={{ style: { zIndex: 99999 } }}
-              >
-                <MenuItem value="" disabled><em style={{ color: '#9ca3af', fontStyle: 'normal' }}>Davomiylikni tanlang</em></MenuItem>
-                <MenuItem value="1 oy">1 oy</MenuItem>
-                <MenuItem value="2 oy">2 oy</MenuItem>
-                <MenuItem value="3 oy">3 oy</MenuItem>
-                <MenuItem value="4 oy">4 oy</MenuItem>
-                <MenuItem value="6 oy">6 oy</MenuItem>
-                <MenuItem value="8 oy">8 oy</MenuItem>
-                <MenuItem value="12 oy">12 oy</MenuItem>
-              </Select>
+              <Box sx={{ border: '1px solid #d1d5db', borderRadius: '8px', px: 2, py: 1, bgcolor: '#f9fafb' }}>
+                <Typography sx={{ fontSize: '14px', color: createGroup.course_id ? '#111827' : '#9ca3af' }}>
+                  {createGroup.course_id
+                    ? `${courses.find(c => c.id === Number(createGroup.course_id))?.duration_month} oy`
+                    : 'Avval kursni tanlang'
+                  }
+                </Typography>
+              </Box>
             </Box>
 
             {/* Xona */}
@@ -492,18 +625,19 @@ function Groups() {
                 Xona
               </Typography>
               <Select
+                name='room_id'
+                value={createGroup.room_id ?? ''}
                 displayEmpty
                 fullWidth
-                value={selectedXona}
-                onChange={(e) => setSelectedXona(e.target.value)}
+                onChange={(e) => setCreateGroup(p => ({ ...p, room_id: e.target.value ? Number(e.target.value) : null }))}
                 size="small"
                 MenuProps={{ style: { zIndex: 99999 } }}
               >
                 <MenuItem value="" disabled><em style={{ color: '#9ca3af', fontStyle: 'normal' }}>Xonani tanlang</em></MenuItem>
-                <MenuItem value="Autodesk">Autodesk</MenuItem>
-                <MenuItem value="NodeJs">NodeJs xonasi</MenuItem>
-                <MenuItem value="React">React xonasi</MenuItem>
-                <MenuItem value="Python">Python xonasi</MenuItem>
+
+                {availableRooms.map(item => (
+                  <MenuItem key={item.id} value={item.id}>{item.name}</MenuItem>
+                ))}
               </Select>
             </Box>
 
@@ -514,10 +648,11 @@ function Groups() {
               </Typography>
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}>
                 {days.map((day) => {
-                  const isChecked = selectedDays.includes(day);
+                  const isChecked = selectedDays.includes(day.value);
                   return (
                     <Box
-                      key={day}
+                      name="week_day"
+                      key={day.value}
                       onClick={() => toggleDay(day)}
                       sx={{
                         display: 'flex',
@@ -545,7 +680,7 @@ function Groups() {
                         }}
                       />
                       <Typography className="day-text" sx={{ fontSize: '13px', fontWeight: 600, color: isChecked ? '#7C3AED' : '#111827', userSelect: 'none', transition: 'color 0.2s' }}>
-                        {day}
+                        {day.label}
                       </Typography>
                     </Box>
                   )
@@ -559,9 +694,10 @@ function Groups() {
                 Dars vaqti
               </Typography>
               <TextField sx={{ cursor: 'pointer' }}
+                name='start_time'
                 type="time"
-                value={groupTime}
-                onChange={(e) => setGroupTime(e.target.value)}
+                value={createGroup.start_time}
+                onChange={getGroupInfo}
                 fullWidth
                 size="small"
                 inputProps={{ style: { cursor: 'pointer' } }}
@@ -575,11 +711,12 @@ function Groups() {
                 Boshlanish sanasi
               </Typography>
               <TextField
+                name='start_date'
                 type="date"
                 fullWidth
                 size="small"
-                value={groupStartDate}
-                onChange={(e) => setGroupStartDate(e.target.value)}
+                value={createGroup.start_date}
+                onChange={getGroupInfo}
                 inputProps={{ style: { cursor: 'pointer' } }}
                 onClick={(e) => e.currentTarget.querySelector('input')?.showPicker?.()}
               />
@@ -591,13 +728,37 @@ function Groups() {
                 Tavsif
               </Typography>
               <TextField
+                name='description'
+                value={createGroup.description}
                 multiline
                 rows={3}
                 fullWidth
                 placeholder="Guruh haqida qo'shimcha ma'lumot (ixtiyoriy)"
-                value={groupDesc}
-                onChange={(e) => setGroupDesc(e.target.value)}
+                onChange={getGroupInfo}
                 sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#f9fafb' } }}
+              />
+            </Box>
+
+            {/* Maksimal talabalar soni */}
+            <Box>
+              <Typography sx={{ fontSize: '13px', fontWeight: 600, color: '#111827', mb: 1 }}>
+                Maksimal talabalar soni
+              </Typography>
+              <TextField
+                fullWidth
+                name='max_student'
+                type='number'
+                placeholder="20"
+                size="small"
+                value={createGroup.max_student ?? ''}
+                onChange={(e) => {
+                  const val = e.target.value
+                  setCreateGroup(prev => ({
+                    ...prev,
+                    max_student: val === '' ? null : Number(val)
+                  }))
+                }}
+                inputProps={{ min: 1 }}
               />
             </Box>
 
@@ -609,11 +770,14 @@ function Groups() {
               <Box sx={{ border: '1px solid #e0e0e0', borderRadius: '8px', minHeight: '42px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                 {selectedTeachers.length > 0 && (
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, px: 1.5, pt: 1.5 }}>
-                    {selectedTeachers.map(t => (
-                      <Chip key={t} label={t} color="primary" onDelete={() => toggleTeacher(t)} size="small"
-                        sx={{ bgcolor: '#ede7f6', color: '#7C3AED', fontWeight: 500, borderRadius: '16px', '& .MuiChip-deleteIcon': { color: '#7C3AED', '&:hover': { color: '#5B21B6' } } }}
-                      />
-                    ))}
+                    {selectedTeachers.map(id => {
+                      const teacher = availableTeacherss.find(item => item.id === id)
+                      return (
+                        <Chip key={id} label={teacher?.full_name} color="primary" onDelete={() => toggleTeacher(id)} size="small"
+                          sx={{ bgcolor: '#ede7f6', color: '#7C3AED', fontWeight: 500, borderRadius: '16px', '& .MuiChip-deleteIcon': { color: '#7C3AED', '&:hover': { color: '#5B21B6' } } }}
+                        />
+                      )
+                    })}
                   </Box>
                 )}
                 <Button
@@ -635,11 +799,15 @@ function Groups() {
               <Box sx={{ border: '1px solid #e0e0e0', borderRadius: '8px', minHeight: '42px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                 {selectedStudents.length > 0 && (
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, px: 1.5, pt: 1.5 }}>
-                    {selectedStudents.map(s => (
-                      <Chip key={s} label={s} color="primary" onDelete={() => toggleStudent(s)} size="small"
-                        sx={{ bgcolor: '#ede7f6', color: '#7C3AED', fontWeight: 500, borderRadius: '16px', '& .MuiChip-deleteIcon': { color: '#7C3AED', '&:hover': { color: '#5B21B6' } } }}
-                      />
-                    ))}
+                    {selectedStudents.map(id => {
+                      const student = availableStudents.find(item => item.id === id)
+
+                      return (
+                        <Chip key={id} label={student?.full_name} color="primary" onDelete={() => toggleStudent(id)} size="small"
+                          sx={{ bgcolor: '#ede7f6', color: '#7C3AED', fontWeight: 500, borderRadius: '16px', '& .MuiChip-deleteIcon': { color: '#7C3AED', '&:hover': { color: '#5B21B6' } } }}
+                        />
+                      )
+                    })}
                   </Box>
                 )}
                 <Button
@@ -657,7 +825,7 @@ function Groups() {
           {/* Drawer Footer */}
           <Box sx={{ px: 3, py: 2, borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'flex-end', gap: 2, bgcolor: '#fff' }}>
             <Button
-              onClick={() => setIsDrawerOpen(false)}
+              onClick={handleCloseDrawer}
               sx={{
                 color: '#1f2937',
                 bgcolor: '#fff',
@@ -672,6 +840,7 @@ function Groups() {
               Bekor qilish
             </Button>
             <Button
+              onClick={createGroups}
               variant="contained"
               sx={{
                 bgcolor: '#8b5cf6',
@@ -712,7 +881,6 @@ function Groups() {
               fullWidth
               placeholder="O'qituvchi qidirish..."
               size="small"
-              value={teacherSearch}
               onChange={(e) => setTeacherSearch(e.target.value)}
               sx={{
                 mb: 2,
@@ -727,8 +895,8 @@ function Groups() {
             <Box sx={{ border: '1px solid #E5E7EB', borderRadius: '8px', mb: 3, maxHeight: '220px', overflowY: 'auto', overflowX: 'hidden' }}>
               {filteredTeachers.map((teacher, index) => (
                 <Box
-                  key={teacher}
-                  onClick={() => toggleTeacher(teacher)}
+                  key={teacher.id}
+                  onClick={() => toggleTeacher(teacher.id)}
                   sx={{
                     display: 'flex', alignItems: 'center',
                     px: 2, py: 1.5,
@@ -738,12 +906,12 @@ function Groups() {
                   }}
                 >
                   <Checkbox
-                    checked={selectedTeachers.includes(teacher)}
+                    checked={selectedTeachers.includes(teacher.id)}
                     disableRipple
                     sx={{ p: 0, mr: 1.5, pointerEvents: 'none', color: '#D1D5DB', '&.Mui-checked': { color: '#7C3AED' }, '& .MuiSvgIcon-root': { fontSize: 20 } }}
                   />
                   <Typography sx={{ fontWeight: 500, color: '#111827', fontSize: '14px', userSelect: 'none' }}>
-                    {teacher}
+                    {teacher.full_name}
                   </Typography>
                 </Box>
               ))}
@@ -804,8 +972,8 @@ function Groups() {
             <Box sx={{ border: '1px solid #E5E7EB', borderRadius: '8px', mb: 3, maxHeight: '220px', overflowY: 'auto', overflowX: 'hidden' }}>
               {filteredStudents.map((student, index) => (
                 <Box
-                  key={student}
-                  onClick={() => toggleStudent(student)}
+                  key={student.id}
+                  onClick={() => toggleStudent(student.id)}
                   sx={{
                     display: 'flex', alignItems: 'center',
                     px: 2, py: 1.5,
@@ -815,12 +983,12 @@ function Groups() {
                   }}
                 >
                   <Checkbox
-                    checked={selectedStudents.includes(student)}
+                    checked={selectedStudents.includes(student.id)}
                     disableRipple
                     sx={{ p: 0, mr: 1.5, pointerEvents: 'none', color: '#D1D5DB', '&.Mui-checked': { color: '#7C3AED' }, '& .MuiSvgIcon-root': { fontSize: 20 } }}
                   />
                   <Typography sx={{ fontWeight: 500, color: '#111827', fontSize: '14px', userSelect: 'none' }}>
-                    {student}
+                    {student.full_name}
                   </Typography>
                 </Box>
               ))}
@@ -842,6 +1010,24 @@ function Groups() {
             </Box>
           </Box>
         </Dialog>
+
+        {/* Xato xabari - Snackbar */}
+        <Snackbar
+          sx={{ zIndex: 99999 }}
+          open={!!errorMsg}
+          autoHideDuration={5000}
+          onClose={() => setErrorMsg('')}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        >
+          <Alert
+            onClose={() => setErrorMsg('')}
+            severity="error"
+            variant="filled"
+            sx={{ width: '100%', borderRadius: '8px' }}
+          >
+            {errorMsg}
+          </Alert>
+        </Snackbar>
 
       </Box>
     </ThemeProvider>
