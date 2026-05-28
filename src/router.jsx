@@ -11,6 +11,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const ManagementCourse = lazy(() => import("./components/ManagementCourse"));
 const ManagementRoom = lazy(() => import("./components/ManagementRoom"));
 import HomeworkCreate from "./components/HomeworkCreate";
+import LessonDetail from "./components/LessonDetail";
 import Loader from "./components/Loader";
 
 const router = createBrowserRouter([
@@ -62,6 +63,9 @@ const router = createBrowserRouter([
           },
           {
             path: "groups/:id/homework/create", element: <HomeworkCreate />
+          },
+          {
+            path: "groups/:id/lesson/:date", element: <LessonDetail />
           },
           {
             path: "students", element: <Student />

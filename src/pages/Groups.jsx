@@ -24,17 +24,15 @@ import {
   MenuItem,
   Checkbox,
   Select,
-  Snackbar,
-  Alert,
 } from '@mui/material';
 import GroupsIcon from '@mui/icons-material/Groups';
 import SchoolIcon from '@mui/icons-material/School';
-import PersonIcon from '@mui/icons-material/Person';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ArchiveIcon from '@mui/icons-material/Archive';
 import CloseIcon from '@mui/icons-material/Close';
 import axiosClient from '../api/axios';
+import ErrorModal from '../components/ErrorModal';
 
 const theme = createTheme({
   palette: {
@@ -94,7 +92,7 @@ function Groups() {
   const [availableTeacherss, setAvailableTeacherss] = useState([])
   const [availableStudents, setAvailableStudents] = useState([])
   const [availableRooms, setAvailableRooms] = useState([])
-  const [errorMsg, setErrorMsg] = useState('')
+  const [errorModal, setErrorModal] = useState({ open: false, message: '' })
 
 
 
@@ -185,42 +183,38 @@ function Groups() {
     } catch (err) {
       console.error("Statusni yangilashda xatolik:", err);
       setGroupStatuses(prev => ({ ...prev, [id]: currentStatus }));
-      setErrorMsg("Statusni yangilashda xatolik yuz berdi");
+      setErrorModal({ open: true, message: "Statusni yangilashda xatolik yuz berdi" });
     }
   };
-
-
-
-
 
 
   useEffect(() => {
     async function handleGroups() {
       try {
+        const endpoint = activeTab === 'arxiv' ? '/groups/archive' : '/groups/all';
         const [groupsRes, coursesRes, teachersRes, studentRes, roomsRes] = await Promise.all([
-          axiosClient.get('/groups/all'),
+          axiosClient.get(endpoint),
           axiosClient.get('/courses'),
           axiosClient.get('/teachers'),
           axiosClient.get('/students'),
           axiosClient.get('/rooms'),
         ])
-        const fetchedGroups = groupsRes.data.data
-        console.log(fetchedGroups);
+        const fetchedGroups = groupsRes.data?.data ?? groupsRes.data ?? [];
+        const safeGroups = Array.isArray(fetchedGroups) ? fetchedGroups : [];
 
-        setGroups(fetchedGroups)
+        setGroups(safeGroups)
         setCourses(coursesRes.data.data)
         setAvailableTeacherss(teachersRes.data.data)
         setAvailableStudents(studentRes.data.data)
         setAvailableRooms(roomsRes.data.data)
-        // groupStatuses ni API dan kelgan ma'lumotlar bilan to'ldirish
-        setGroupStatuses(fetchedGroups.reduce((acc, g) => ({ ...acc, [g.id]: g.is_active ?? true }), {}))
+        setGroupStatuses(safeGroups.reduce((acc, g) => ({ ...acc, [g.id]: g.is_active ?? true }), {}))
       } catch (err) {
         console.error(err)
-        setErrorMsg('Ma\'lumotlarni yuklashda xato yuz berdi: ' + (err.response?.data?.message || err.message))
+        setErrorModal({ open: true, message: 'Ma\'lumotlarni yuklashda xato yuz berdi: ' + (err.response?.data?.message || err.message) })
       }
     }
     handleGroups()
-  }, [])
+  }, [activeTab])
 
   const handleCloseDrawer = () => {
     setIsDrawerOpen(false);
@@ -284,7 +278,7 @@ function Groups() {
         || err.response?.data?.error
         || err.message
         || 'Guruh qo\'shishda xato yuz berdi'
-      setErrorMsg(serverMsg)
+      setErrorModal({ open: true, message: serverMsg })
     }
   }
 
@@ -488,7 +482,7 @@ function Groups() {
                     {/* Kurs */}
                     <TableCell align="center">
                       <Chip
-                        label={group.course?.name || '—'}
+                        label={group.courses?.name || group.course?.name || '—'}
                         size="small"
                         sx={{
                           bgcolor: '#fce7f3', color: '#db2777',
@@ -498,7 +492,7 @@ function Groups() {
                     </TableCell>
 
                     {/* Davomiyligi */}
-                    <TableCell align="center" sx={{ color: '#555', fontSize: '14px' }}>{group.course?.duration_month || 0} oy</TableCell>
+                    <TableCell align="center" sx={{ color: '#555', fontSize: '14px' }}>{group.courses?.duration_month || group.course?.duration_month || 0} oy</TableCell>
 
                     {/* Dars vaqti */}
                     <TableCell align="center">
@@ -512,7 +506,7 @@ function Groups() {
 
                     {/* Xona */}
                     <TableCell align="center" sx={{ color: '#555', fontSize: '14px' }}>
-                      {group.room?.name ?? group.room ?? '—'}
+                      {group.rooms?.name || group.room?.name || group.room || '—'}
                     </TableCell>
 
                     {/* O'qituvchi */}
@@ -524,7 +518,7 @@ function Groups() {
 
                     {/* Talabalar */}
                     <TableCell align="center" sx={{ color: '#555', fontSize: '14px', fontWeight: 500 }}>
-                      {group.student_count}
+                      {group.student_count ?? group.students?.length ?? 0}
                     </TableCell>
 
                     {/* Actions */}
@@ -693,15 +687,13 @@ function Groups() {
               <Typography sx={{ fontSize: '13px', fontWeight: 600, color: '#111827', mb: 1 }}>
                 Dars vaqti
               </Typography>
-              <TextField sx={{ cursor: 'pointer' }}
+              <TextField
                 name='start_time'
                 type="time"
                 value={createGroup.start_time}
                 onChange={getGroupInfo}
                 fullWidth
                 size="small"
-                inputProps={{ style: { cursor: 'pointer' } }}
-                onClick={(e) => e.currentTarget.querySelector('input')?.showPicker?.()}
               />
             </Box>
 
@@ -717,8 +709,6 @@ function Groups() {
                 size="small"
                 value={createGroup.start_date}
                 onChange={getGroupInfo}
-                inputProps={{ style: { cursor: 'pointer' } }}
-                onClick={(e) => e.currentTarget.querySelector('input')?.showPicker?.()}
               />
             </Box>
 
@@ -1011,24 +1001,12 @@ function Groups() {
           </Box>
         </Dialog>
 
-        {/* Xato xabari - Snackbar */}
-        <Snackbar
-          sx={{ zIndex: 99999 }}
-          open={!!errorMsg}
-          autoHideDuration={5000}
-          onClose={() => setErrorMsg('')}
-          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-        >
-          <Alert
-            onClose={() => setErrorMsg('')}
-            severity="error"
-            variant="filled"
-            sx={{ width: '100%', borderRadius: '8px' }}
-          >
-            {errorMsg}
-          </Alert>
-        </Snackbar>
-
+        {/* Error Modal */}
+        <ErrorModal
+          open={errorModal.open}
+          onClose={() => setErrorModal({ open: false, message: '' })}
+          message={errorModal.message}
+        />
       </Box>
     </ThemeProvider>
   );

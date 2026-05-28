@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Box, Typography, Button, IconButton, TextField, MenuItem, Select, Paper, Divider } from '@mui/material';
+import { Box, Typography, Button, IconButton, TextField, MenuItem, Select, Paper, Divider, CircularProgress } from '@mui/material';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import FormatBoldIcon from '@mui/icons-material/FormatBold';
@@ -22,11 +22,14 @@ function HomeworkCreate() {
   const [topic, setTopic] = useState('');
   const [description, setDescription] = useState('');
   const [topics, setTopics] = useState([]);
+  const [file, setFile] = useState(null);
+  const fileInputRef = useRef(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     async function fetchTopics() {
       try {
-        const res = await axiosClient.get('/homework/all');
+        const res = await axiosClient.get(`/lessons/my/group/${id}`);
         const data = res.data?.data || res.data || [];
         setTopics(Array.isArray(data) ? data : []);
       } catch (error) {
@@ -34,10 +37,47 @@ function HomeworkCreate() {
       }
     }
     fetchTopics();
-  }, []);
+  }, [id]);
 
   const onBack = () => {
     navigate(`/dashboard/groups/${id}?tab=1`);
+  };
+
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0]);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!topic || !description) {
+      alert("Iltimos, mavzu va sarlavhani kiriting.");
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('lesson_id', Number(topic));
+      formData.append('group_id', Number(id));
+      formData.append('title', description);
+      if (file) {
+        formData.append('file', file);
+      }
+
+      await axiosClient.post('/homework', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      onBack();
+    } catch (error) {
+      console.error("Vazifa yaratishda xatolik:", error.response?.data || error);
+      alert("Xatolik yuz berdi: " + (error.response?.data?.message || error.message));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -89,8 +129,8 @@ function HomeworkCreate() {
           >
             <MenuItem value="" disabled sx={{ color: '#94a3b8', fontSize: '15px', py: 1.2 }}>Mavzulardan birini tanlang</MenuItem>
             {topics.map((t, index) => (
-              <MenuItem key={t.id || index} value={t.id || t.title} sx={{ fontSize: '15px', py: 1.2 }}>
-                {t.title || 'Nomsiz mavzu'}
+              <MenuItem key={t.id || index} value={t.id || t.lesson_id} sx={{ fontSize: '15px', py: 1.2 }}>
+                {t.title || t.topic || t.name || 'Nomsiz mavzu'}
               </MenuItem>
             ))}
           </Select>
@@ -99,7 +139,7 @@ function HomeworkCreate() {
         {/* Izoh (Rich Text Editor Mock) */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           <Typography sx={{ fontSize: '14px', fontWeight: 700, color: '#111827' }}>
-            <span style={{ color: '#ef4444' }}>*</span> Izoh
+            <span style={{ color: '#ef4444' }}>*</span> Sarlavha
           </Typography>
           <Paper variant="outlined" sx={{ borderRadius: '8px', borderColor: '#e2e8f0', overflow: 'hidden' }}>
             {/* Toolbar */}
@@ -152,6 +192,7 @@ function HomeworkCreate() {
 
         {/* File Upload Area */}
         <Box
+          onClick={() => fileInputRef.current?.click()}
           sx={{
             display: 'flex',
             flexDirection: 'column',
@@ -170,9 +211,15 @@ function HomeworkCreate() {
             }
           }}
         >
+          <input
+            type="file"
+            hidden
+            ref={fileInputRef}
+            onChange={handleFileChange}
+          />
           <CloudUploadIcon sx={{ fontSize: 48, color: '#10b981' }} />
           <Typography sx={{ color: '#64748b', fontSize: '15px', fontWeight: 500 }}>
-            Faylni tanlash yoki shu yerga tashlang
+            {file ? file.name : "Faylni tanlash yoki shu yerga tashlang (Ixtiyoriy)"}
           </Typography>
         </Box>
 
@@ -180,6 +227,7 @@ function HomeworkCreate() {
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
           <Button
             onClick={onBack}
+            disabled={loading}
             variant="outlined"
             sx={{
               color: '#475569',
@@ -199,6 +247,8 @@ function HomeworkCreate() {
             Bekor qilish
           </Button>
           <Button
+            onClick={handleSubmit}
+            disabled={loading}
             variant="contained"
             sx={{
               bgcolor: '#10b981',
@@ -217,10 +267,14 @@ function HomeworkCreate() {
               },
               '&:active': {
                 boxShadow: '0px 1px 2px rgba(16, 185, 129, 0.4)',
+              },
+              '&.Mui-disabled': {
+                bgcolor: '#a7f3d0',
+                color: '#fff',
               }
             }}
           >
-            E'lon qilish
+            {loading ? <CircularProgress size={24} color="inherit" /> : "E'lon qilish"}
           </Button>
         </Box>
 

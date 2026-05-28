@@ -182,24 +182,30 @@ function SingleGroups() {
               <Typography sx={{ fontWeight: 700, fontSize: '16px', color: '#111827' }}>Dars jadvali</Typography>
             </Box>
             <Box sx={{ p: 3, pt: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {/* Row */}
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, bgcolor: '#f8fafc', borderRadius: '8px' }}>
-                <Typography sx={{ color: '#2563eb', fontWeight: 600, fontSize: '14px', flex: 1 }}>
-                  {group.teachers?.length > 0 ? group.teachers[0].full_name : 'O\'qituvchi yo\'q'}
-                </Typography>
-                <Typography sx={{ color: '#475569', fontSize: '14px', flex: 1, textAlign: 'center' }}>
-                  {group.week_day?.map(d => ({ MONDAY: 'Du', TUESDAY: 'Se', WEDNESDAY: 'Ch', THURSDAY: 'Pa', FRIDAY: 'Ju', SATURDAY: 'Sh', SUNDAY: 'Yak' }[d])).join('/') || '—'}
-                </Typography>
-                <Typography sx={{ color: '#475569', fontSize: '14px', flex: 1, textAlign: 'center' }}>
-                  {(group.start_time || '').slice(0, 5)} dan - {group.end_time ? group.end_time.slice(0, 5) : '12:30'} gacha
-                </Typography>
-                <Typography sx={{ color: '#475569', fontSize: '14px', flex: 1, textAlign: 'center' }}>
-                  {group.start_date ? formatDate(group.start_date) : '15 Yan, 2026'} - {group.end_date ? formatDate(group.end_date) : '27 Iyun, 2026'}
-                </Typography>
-                <Typography sx={{ color: '#475569', fontSize: '14px', flex: 1, textAlign: 'right' }}>
-                  {group.room?.name || '—'} // {group.room?.max_student || group.max_student || 18}
-                </Typography>
-              </Box>
+              {/* Rows — har bir teacher uchun alohida qator */}
+              {group.teachers?.length > 0 ? group.teachers.map((teacher, tIdx) => (
+                <Box key={tIdx} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, bgcolor: '#f8fafc', borderRadius: '8px' }}>
+                  <Typography sx={{ color: '#2563eb', fontWeight: 600, fontSize: '14px', flex: 1 }}>
+                    {teacher.full_name}
+                  </Typography>
+                  <Typography sx={{ color: '#475569', fontSize: '14px', flex: 1, textAlign: 'center' }}>
+                    {group.week_day?.map(d => ({ MONDAY: 'Du', TUESDAY: 'Se', WEDNESDAY: 'Ch', THURSDAY: 'Pa', FRIDAY: 'Ju', SATURDAY: 'Sh', SUNDAY: 'Yak' }[d])).join('/') || '—'}
+                  </Typography>
+                  <Typography sx={{ color: '#475569', fontSize: '14px', flex: 1, textAlign: 'center' }}>
+                    {(group.start_time || '').slice(0, 5)} dan - {group.end_time ? group.end_time.slice(0, 5) : '12:30'} gacha
+                  </Typography>
+                  <Typography sx={{ color: '#475569', fontSize: '14px', flex: 1, textAlign: 'center' }}>
+                    {group.start_date ? formatDate(group.start_date) : '15 Yan, 2026'} - {group.end_date ? formatDate(group.end_date) : '27 Iyun, 2026'}
+                  </Typography>
+                  <Typography sx={{ color: '#475569', fontSize: '14px', flex: 1, textAlign: 'right' }}>
+                    {group.room}
+                  </Typography>
+                </Box>
+              )) : (
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, bgcolor: '#f8fafc', borderRadius: '8px' }}>
+                  <Typography sx={{ color: '#6b7280', fontSize: '14px', flex: 1 }}>O'qituvchi yo'q</Typography>
+                </Box>
+              )}
 
               <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
                 <Button variant="outlined" sx={{ color: '#475569', borderColor: '#e2e8f0', borderRadius: '8px', textTransform: 'none', px: 3, py: 0.5, fontWeight: 500 }}>
@@ -229,10 +235,14 @@ function SingleGroups() {
                             const mIndex = monthsList.indexOf((dayObj.month || '').substring(0, 3).toLowerCase());
                             const isPast = mIndex !== -1 && (mIndex < todayMonth || (mIndex === todayMonth && dayObj.day < todayDate));
 
+                            const monthNums = {'jan':'01','feb':'02','mar':'03','apr':'04','may':'05','jun':'06','jul':'07','aug':'08','sep':'09','oct':'10','nov':'11','dec':'12'};
+                            const mKey = (dayObj.month || '').substring(0, 3).toLowerCase();
+                            const isoDate = `${new Date().getFullYear()}-${monthNums[mKey] || '01'}-${String(dayObj.day).padStart(2, '0')}`;
+
                             return (
-                              <Box key={dIdx} sx={{ minWidth: '48px', height: '56px', bgcolor: isPast ? '#e2e8f0' : '#fff', border: isPast ? 'none' : '1px solid #e2e8f0', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', '&:hover': { bgcolor: isPast ? '#cbd5e1' : '#f8fafc' } }}>
-                                <Typography sx={{ fontSize: '11px', color: isPast ? '#64748b' : '#94a3b8' }}>{dayObj.month.slice(0, 3)}</Typography>
-                                <Typography sx={{ fontSize: '15px', fontWeight: 600, color: isPast ? '#334155' : '#64748b' }}>{dayObj.day}</Typography>
+                              <Box key={dIdx} onClick={() => navigate(`/dashboard/groups/${id}/lesson/${isoDate}`)} sx={{ minWidth: '40px', height: '48px', bgcolor: isPast ? '#e2e8f0' : '#fff', border: isPast ? 'none' : '1px solid #e2e8f0', borderRadius: '6px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', '&:hover': { opacity: 0.8 } }}>
+                                <Typography sx={{ fontSize: '10px', color: isPast ? '#64748b' : '#94a3b8' }}>{dayObj.month.slice(0, 3)}</Typography>
+                                <Typography sx={{ fontSize: '13px', fontWeight: 600, color: isPast ? '#334155' : '#64748b' }}>{dayObj.day}</Typography>
                               </Box>
                             );
                           })}
@@ -263,10 +273,14 @@ function SingleGroups() {
                             const mIndex = monthsList.indexOf((dayObj.month || '').substring(0, 3).toLowerCase());
                             const isPast = mIndex !== -1 && (mIndex < todayMonth || (mIndex === todayMonth && dayObj.day < todayDate));
 
+                            const monthNums = {'jan':'01','feb':'02','mar':'03','apr':'04','may':'05','jun':'06','jul':'07','aug':'08','sep':'09','oct':'10','nov':'11','dec':'12'};
+                            const mKey = (dayObj.month || '').substring(0, 3).toLowerCase();
+                            const isoDate = `${new Date().getFullYear()}-${monthNums[mKey] || '01'}-${String(dayObj.day).padStart(2, '0')}`;
+
                             return (
-                              <Box key={dIdx} sx={{ width: '48px', height: '56px', bgcolor: isPast ? '#e2e8f0' : '#fff', border: isPast ? 'none' : '1px solid #e2e8f0', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', '&:hover': { bgcolor: isPast ? '#cbd5e1' : '#f8fafc' } }}>
-                                <Typography sx={{ fontSize: '11px', color: isPast ? '#64748b' : '#94a3b8' }}>{dayObj.month.slice(0, 3)}</Typography>
-                                <Typography sx={{ fontSize: '15px', fontWeight: 600, color: isPast ? '#334155' : '#64748b' }}>{dayObj.day}</Typography>
+                              <Box key={dIdx} onClick={() => navigate(`/dashboard/groups/${id}/lesson/${isoDate}`)} sx={{ width: '36px', height: '44px', bgcolor: isPast ? '#e2e8f0' : '#fff', border: isPast ? 'none' : '1px solid #e2e8f0', borderRadius: '6px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', '&:hover': { opacity: 0.8 } }}>
+                                <Typography sx={{ fontSize: '10px', color: isPast ? '#64748b' : '#94a3b8' }}>{dayObj.month.slice(0, 3)}</Typography>
+                                <Typography sx={{ fontSize: '13px', fontWeight: 600, color: isPast ? '#334155' : '#64748b' }}>{dayObj.day}</Typography>
                               </Box>
                             );
                           })}

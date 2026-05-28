@@ -10,8 +10,11 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import CloseIcon from '@mui/icons-material/Close';
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
+import SearchOffIcon from '@mui/icons-material/SearchOff';
 import axiosClient from '../api/axios';
 import loading from "../assets/images/loading.gif";
+import DeleteConfirmModal from '../components/DeleteConfirmModal';
+import ErrorModal from '../components/ErrorModal';
 
 const theme = createTheme({
   palette: { primary: { main: '#7C3AED' } },
@@ -40,15 +43,19 @@ function Teacher() {
   const [page, setPage] = useState(1);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [teacherToDelete, setTeacherToDelete] = useState(null);
   const [groupSearch, setGroupSearch] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTeacherId, setEditTeacherId] = useState(null);
+  const [isArchiveView, setIsArchiveView] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [errorModal, setErrorModal] = useState({ open: false, message: "" });
   const fileInputRef = useRef(null);
 
   const [teacher, setTeacher] = useState([]);
-  const availableGroups = [
-    { id: 1, name: 'N26' },
-    { id: 2, name: 'n105' },
-  ];
+  const [availableGroups, setAvailableGroups] = useState([]);
 
   const [createTeacher, setCreateTeacher] = useState({
     full_name: '', email: '', password: '', phone: '', address: '', groups: [],
@@ -73,28 +80,37 @@ function Teacher() {
   };
 
   useEffect(() => {
-    async function getTeacher() {
+    async function fetchData() {
       try {
-        const res = await axiosClient.get('/teachers');
-        if (res.status === 200) {
-          startTransition(() => setTeacher(res.data.data));
+        const [teachersRes, groupsRes] = await Promise.all([
+          axiosClient.get(isArchiveView ? '/teachers/archive' : '/teachers'),
+          axiosClient.get('/groups/all')
+        ]);
+        if (teachersRes.status === 200) {
+          startTransition(() => setTeacher(teachersRes.data.data));
+        }
+        if (groupsRes.status === 200) {
+          const gData = groupsRes.data?.data || groupsRes.data || [];
+          setAvailableGroups(Array.isArray(gData) ? gData : []);
         }
       } catch (error) {
         console.log(error.message);
       }
     }
-    getTeacher();
-  }, []);
+    fetchData();
+  }, [isArchiveView]);
 
   function resetForm() {
     setCreateTeacher({ full_name: '', email: '', password: '', phone: '', address: '', groups: [] });
     setSelectedImage(null);
+    setIsEditing(false);
+    setEditTeacherId(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
   async function handleCreateTeacher() {
-    if (!createTeacher.full_name || !createTeacher.phone || !createTeacher.email || !createTeacher.password) {
-      alert("Iltimos, barcha majburiy maydonlarni to'ldiring!");
+    if (!createTeacher.full_name || !createTeacher.phone || !createTeacher.email || (!isEditing && !createTeacher.password)) {
+      setErrorModal({ open: true, message: "Iltimos, barcha majburiy maydonlarni to'ldiring!" });
       return;
     }
     setIsSaving(true);
@@ -102,17 +118,30 @@ function Teacher() {
       const formData = new FormData();
       formData.append('full_name', createTeacher.full_name);
       formData.append('email', createTeacher.email);
-      formData.append('password', createTeacher.password);
-      formData.append('phone', createTeacher.phone);
+      if (createTeacher.password) {
+        formData.append('password', createTeacher.password);
+      }
+      let formattedPhone = createTeacher.phone.replace(/\s+/g, '');
+      if (!formattedPhone.startsWith('+')) {
+        formattedPhone = '+' + formattedPhone;
+      }
+      formData.append('phone', formattedPhone);
       formData.append('address', createTeacher.address);
       createTeacher.groups.forEach(g => formData.append('groups', g));
       if (fileInputRef.current?.files[0]) {
         formData.append('photo', fileInputRef.current.files[0]);
       }
 
-      const res = await axiosClient.post('/teachers', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      let res;
+      if (isEditing) {
+        res = await axiosClient.patch(`/teachers/${editTeacherId}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+      } else {
+        res = await axiosClient.post('/teachers', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+      }
 
       if (res.status === 201 || res.status === 200) {
         const updated = await axiosClient.get('/teachers');
@@ -122,7 +151,7 @@ function Teacher() {
       }
     } catch (error) {
       console.error('Xato:', error.response?.data);
-      alert(`Xato: ${error.response?.data?.message || error.message}`);
+      setErrorModal({ open: true, message: `Xato: ${error.response?.data?.message || error.message}` });
     } finally {
       setIsSaving(false);
     }
@@ -132,12 +161,70 @@ function Teacher() {
     setCreateTeacher(prev => ({ ...prev, [e.target.name]: e.target.value }));
   }
 
+  const handleEditClick = async (id) => {
+    try {
+      const res = await axiosClient.get(`/teachers/one/${id}`);
+      const data = res.data?.data || res.data;
+
+      const groupIds = [];
+      if (Array.isArray(data.groups)) {
+        data.groups.forEach(groupName => {
+          const found = availableGroups.find(g => g.name === groupName);
+          if (found) groupIds.push(found.id);
+        });
+      }
+
+      setCreateTeacher({
+        full_name: data.full_name || '',
+        email: data.email || '',
+        password: '',
+        phone: data.phone || '',
+        address: data.address || '',
+        groups: groupIds,
+      });
+
+      if (data.photo) {
+        setSelectedImage(`https://najot-edu.softwareengineer.uz/uploads/${data.photo}`);
+      } else {
+        setSelectedImage(null);
+      }
+
+      setEditTeacherId(id);
+      setIsEditing(true);
+      setIsDrawerOpen(true);
+    } catch (error) {
+      console.error("Ma'lumotni yuklashda xatolik:", error);
+      setErrorModal({ open: true, message: "O'qituvchi ma'lumotlarini yuklashda xatolik yuz berdi" });
+    }
+  };
+
+  const filteredTeachers = teacher.filter(t =>
+    (t.full_name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+    (t.phone || '').includes(searchQuery)
+  );
+
   const itemsPerPage = 5;
-  const totalPages = Math.ceil(teacher.length / itemsPerPage);
-  const paginatedTeachers = teacher.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+  const totalPages = Math.ceil(filteredTeachers.length / itemsPerPage);
+  const paginatedTeachers = filteredTeachers.slice((page - 1) * itemsPerPage, page * itemsPerPage);
 
   const handlePageChange = (event, value) => {
     setPage(value);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!teacherToDelete?.id) return;
+    try {
+      const res = await axiosClient.delete(`/teachers/${teacherToDelete.id}`);
+      if (res.status === 200 || res.status === 204) {
+        setTeacher(prev => prev.filter(t => t.id !== teacherToDelete.id));
+      }
+    } catch (error) {
+      console.error("O'chirishda xatolik:", error);
+      setErrorModal({ open: true, message: "Ma'lumotni o'chirishda xatolik yuz berdi!" });
+    } finally {
+      setDeleteModalOpen(false);
+      setTeacherToDelete(null);
+    }
   };
 
   return (
@@ -148,7 +235,7 @@ function Teacher() {
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
           <Box sx={{ maxWidth: 950 }}>
             <Typography variant="h4" sx={{ fontWeight: 700, mb: 1, color: '#1a1a1a', fontSize: '28px' }}>
-              O'qituvchilar
+              O'qituvchilar {isArchiveView && <span style={{ color: '#7C3AED', fontSize: '28px' }}>(Arxiv)</span>}
             </Typography>
             <Typography variant="body2" sx={{ color: '#666', lineHeight: 1.6 }}>
               Ushbu sahifada siz o'qituvchilar ro'yxatini va ularning ma'lumotlarini topasiz.
@@ -169,13 +256,29 @@ function Teacher() {
                 sx={{ color: '#333', borderColor: '#e0e0e0', fontWeight: 500, '&:hover': { borderColor: '#ccc', bgcolor: '#f9f9f9' } }}>
                 Filters
               </Button>
-              <Button variant="outlined"
-                sx={{ color: '#333', borderColor: '#e0e0e0', fontWeight: 500, '&:hover': { borderColor: '#ccc', bgcolor: '#f9f9f9' } }}>
+              <Button
+                variant={isArchiveView ? "contained" : "outlined"}
+                onClick={() => { setIsArchiveView(!isArchiveView); setPage(1); }}
+                sx={{
+                  fontWeight: 500,
+                  ...(isArchiveView
+                    ? { bgcolor: '#7C3AED', color: '#fff', '&:hover': { bgcolor: '#5B21B6' } }
+                    : { color: '#333', borderColor: '#e0e0e0', '&:hover': { borderColor: '#ccc', bgcolor: '#f9f9f9' } }
+                  )
+                }}>
                 Arxiv
               </Button>
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', border: '1px solid #e0e0e0', borderRadius: '8px', px: 2, py: 0.5, width: '300px', bgcolor: '#fcfcfc' }}>
-              <InputBase placeholder="Search" sx={{ ml: 1, flex: 1, fontSize: '14px' }} />
+              <InputBase
+                placeholder="Search"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setPage(1);
+                }}
+                sx={{ ml: 1, flex: 1, fontSize: '14px' }}
+              />
             </Box>
           </Box>
 
@@ -199,8 +302,8 @@ function Teacher() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {paginatedTeachers.map((teacherItem, index) => (
-                    <TableRow key={index} hover sx={{ '& td': { borderBottom: '1px solid #eee', py: 1, px: 1 } }}>
+                  {paginatedTeachers.length > 0 ? paginatedTeachers.map((teacherItem, index) => (
+                    <TableRow key={index} hover sx={{ '& td': { borderBottom: 'px solid #eee', py: 1, px: 1 } }}>
                       <TableCell padding="checkbox"><Checkbox color="primary" /></TableCell>
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -224,11 +327,25 @@ function Teacher() {
                       <TableCell align="center" sx={{ color: '#4b5563', whiteSpace: 'nowrap', fontSize: '14px' }}>{teacherItem.created_at?.split('T')[0] || '-'}</TableCell>
                       <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
                         <IconButton size="small" sx={{ color: '#777', '&:hover': { color: '#7C3AED' } }}><VisibilityIcon fontSize="small" /></IconButton>
-                        <IconButton size="small" sx={{ color: '#777', '&:hover': { color: '#f44336' } }}><DeleteIcon fontSize="small" /></IconButton>
-                        <IconButton size="small" sx={{ color: '#7C3AED', '&:hover': { color: '#5B21B6' } }}><EditIcon fontSize="small" /></IconButton>
+                        <IconButton size="small" sx={{ color: '#777', '&:hover': { color: '#f44336' } }} onClick={() => {
+                          setTeacherToDelete(teacherItem);
+                          setDeleteModalOpen(true);
+                        }}><DeleteIcon fontSize="small" /></IconButton>
+                        <IconButton size="small" sx={{ color: '#7C3AED', '&:hover': { color: '#5B21B6' } }} onClick={() => handleEditClick(teacherItem.id)}><EditIcon fontSize="small" /></IconButton>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )) : (
+                    <TableRow>
+                      <TableCell colSpan={8} align="center" sx={{ py: 10, pt: 15, borderBottom: 'none' }}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5, opacity: 0.8 }}>
+                          <SearchOffIcon sx={{ fontSize: 56, color: '#9CA3AF' }} />
+                          <Typography sx={{ color: '#6B7280', fontSize: '15px', fontWeight: 500 }}>
+                            {searchQuery ? "Qidiruvingiz bo'yicha ma'lumot topilmadi" : "Hozircha ma'lumotlar mavjud emas"}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             )}
@@ -242,14 +359,18 @@ function Teacher() {
         </Paper>
 
         {/* Drawer */}
-        <Drawer anchor="right" open={isDrawerOpen} onClose={() => setIsDrawerOpen(false)}
+        <Drawer anchor="right" open={isDrawerOpen} onClose={() => { setIsDrawerOpen(false); resetForm(); }}
           sx={{ zIndex: 9999, '& .MuiDrawer-paper': { width: { xs: '100%', sm: 450 }, display: 'flex', flexDirection: 'column', boxSizing: 'border-box' } }}>
           <Box sx={{ p: 3, pb: 2, borderBottom: '1px solid #c9cacd', position: 'relative' }}>
-            <IconButton onClick={() => setIsDrawerOpen(false)} sx={{ position: 'absolute', right: 16, top: 16, color: '#9ca3af', '&:hover': { color: '#111827' } }}>
+            <IconButton onClick={() => { setIsDrawerOpen(false); resetForm(); }} sx={{ position: 'absolute', right: 16, top: 16, color: '#9ca3af', '&:hover': { color: '#111827' } }}>
               <CloseIcon fontSize="small" />
             </IconButton>
-            <Typography sx={{ fontSize: '20px', fontWeight: 700, color: '#111827', mb: 0.5 }}>O'qituvchi qo'shish</Typography>
-            <Typography sx={{ fontSize: '14px', color: '#6B7280' }}>Bu yerda siz yangi o'qituvchi qo'shishingiz mumkin.</Typography>
+            <Typography sx={{ fontSize: '20px', fontWeight: 700, color: '#111827', mb: 0.5 }}>
+              {isEditing ? "O'qituvchini tahrirlash" : "O'qituvchi qo'shish"}
+            </Typography>
+            <Typography sx={{ fontSize: '14px', color: '#6B7280' }}>
+              {isEditing ? "Bu yerda o'qituvchi ma'lumotlarini tahrirlashingiz mumkin." : "Bu yerda siz yangi o'qituvchi qo'shishingiz mumkin."}
+            </Typography>
           </Box>
 
           <Box sx={{ p: 3, flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2.5 }}>
@@ -319,13 +440,16 @@ function Teacher() {
             {/* Parol */}
             <Box>
               <Typography sx={{ fontWeight: 600, fontSize: '14px', mb: 0.75, color: '#333' }}>Parol</Typography>
-              <TextField fullWidth name="password" type="password" placeholder="Parolni kiriting"
-                size="small" value={createTeacher.password} onChange={getTeacherInfo} />
+              <form autoComplete="off" onSubmit={(e) => e.preventDefault()} style={{ margin: 0 }}>
+                <TextField fullWidth name="password" type="password" placeholder="Parolni kiriting"
+                  size="small" value={createTeacher.password} onChange={getTeacherInfo}
+                  autoComplete="new-password" />
+              </form>
             </Box>
           </Box>
 
           <Box sx={{ px: 3, py: 2, borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-            <Button onClick={() => setIsDrawerOpen(false)}
+            <Button onClick={() => { setIsDrawerOpen(false); resetForm(); }}
               sx={{ color: '#1f2937', bgcolor: '#fff', border: '1px solid #e5e7eb', px: 3.5, py: 1, borderRadius: '8px', fontWeight: 600, '&:hover': { bgcolor: '#f9fafb', borderColor: '#d1d5db' } }}>
               Bekor qilish
             </Button>
@@ -339,7 +463,8 @@ function Teacher() {
         {/* Group Modal */}
         <Dialog open={isGroupModalOpen} onClose={() => setIsGroupModalOpen(false)}
           sx={{ zIndex: 99999 }}
-          PaperProps={{ sx: { borderRadius: '12px', overflow: 'hidden', m: 2 } }}>
+          disableRestoreFocus
+          slotProps={{ paper: { sx: { borderRadius: '12px', overflow: 'hidden', m: 2 } } }}>
           <Box sx={{ p: 2, width: '500px', overflowX: 'hidden' }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.5 }}>
               <Typography sx={{ fontWeight: 700, color: '#111827', fontSize: '22px' }}>Guruhga biriktirish</Typography>
@@ -376,6 +501,21 @@ function Teacher() {
             </Box>
           </Box>
         </Dialog>
+
+        {/* Delete Confirmation Modal */}
+        <DeleteConfirmModal
+          open={deleteModalOpen}
+          onClose={() => setDeleteModalOpen(false)}
+          title="O'qituvchini o'chirish"
+          onConfirm={handleDeleteConfirm}
+        />
+
+        {/* Error Modal */}
+        <ErrorModal 
+          open={errorModal.open} 
+          onClose={() => setErrorModal({ ...errorModal, open: false })} 
+          message={errorModal.message} 
+        />
 
       </Box>
     </ThemeProvider>
