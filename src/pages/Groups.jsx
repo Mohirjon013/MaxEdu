@@ -24,14 +24,20 @@ import {
   MenuItem,
   Checkbox,
   Select,
+  Menu,
+  ListItemIcon,
+  ListItemText
 } from '@mui/material';
 import GroupsIcon from '@mui/icons-material/Groups';
 import SchoolIcon from '@mui/icons-material/School';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ArchiveIcon from '@mui/icons-material/Archive';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import CloseIcon from '@mui/icons-material/Close';
 import axiosClient from '../api/axios';
+import DeleteConfirmModal from '../components/DeleteConfirmModal';
 import ErrorModal from '../components/ErrorModal';
 
 const theme = createTheme({
@@ -99,6 +105,91 @@ function Groups() {
   const [activeTab, setActiveTab] = useState('guruhlar');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedDays, setSelectedDays] = useState([]);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editGroupId, setEditGroupId] = useState(null);
+
+  // Menu State
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedGroupId, setSelectedGroupId] = useState(null);
+
+  const handleOpenMenu = (event, id) => {
+    event.stopPropagation();
+    setAnchorEl(event.currentTarget);
+    setSelectedGroupId(id);
+  };
+
+  const handleCloseMenu = (e) => {
+    if (e) e.stopPropagation();
+    setAnchorEl(null);
+  };
+
+  const handleEditClick = async (e) => {
+    if (e) e.stopPropagation();
+
+    if (!selectedGroupId) return;
+
+    try {
+      const res = await axiosClient.get(`/groups/one/${selectedGroupId}`);
+      const data = res.data?.data || res.data;
+
+      // API id bermaydi — nom bo'yicha topamiz (case-insensitive + partial match)
+      const courseName = data.course?.name?.toLowerCase().trim();
+      const roomName = data.room?.toLowerCase().trim();
+
+      const matchedCourse = courses.find(c => c.name?.toLowerCase().trim() === courseName)
+        || courses.find(c => c.name?.toLowerCase().trim().includes(courseName) || courseName?.includes(c.name?.toLowerCase().trim()));
+
+      const matchedRoom = availableRooms.find(r => r.name?.toLowerCase().trim() === roomName)
+        || availableRooms.find(r => r.name?.toLowerCase().trim().includes(roomName) || roomName?.includes(r.name?.toLowerCase().trim()));
+
+      setCreateGroup({
+        name: data.name || '',
+        description: data.description || '',
+        course_id: matchedCourse?.id || null,
+        teachers: data.teachers?.map(t => t.id) || [],
+        students: data.students?.map(s => s.id) || [],
+        room_id: matchedRoom?.id || null,
+        start_date: data.start_date?.split('T')[0] || '',
+        week_day: data.week_day || [],
+        start_time: (data.start_time || '').slice(0, 5),
+        max_student: data.max_student ?? groups.find(g => g.id === selectedGroupId)?.max_student ?? null
+      });
+
+      setSelectedDays(data.week_day || []);
+      setSelectedTeachers(data.teachers?.map(t => t.id) || []);
+      setSelectedStudents(data.students?.map(s => s.id) || []);
+
+      setEditGroupId(selectedGroupId);
+      setIsEditing(true);
+      setIsDrawerOpen(true);
+    } catch (error) {
+      console.error("Guruh ma'lumotlarini yuklashda xatolik:", error);
+      setErrorModal({ open: true, message: "Guruh ma'lumotlarini yuklashda xatolik yuz berdi" });
+    } finally {
+      handleCloseMenu(e);
+    }
+  };
+
+  const handleDeleteClick = (e) => {
+    if (e) e.stopPropagation();
+    setDeleteModalOpen(true);
+    handleCloseMenu(e);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedGroupId) return;
+    try {
+      await axiosClient.delete(`/groups/${selectedGroupId}`);
+      setGroups(prev => prev.filter(g => g.id !== selectedGroupId));
+    } catch (error) {
+      console.error("Guruhni o'chirishda xatolik:", error);
+      setErrorModal({ open: true, message: error.response?.data?.message || "Guruhni o'chirishda xatolik yuz berdi" });
+    } finally {
+      setDeleteModalOpen(false);
+      setSelectedGroupId(null);
+    }
+  };
 
 
 
@@ -235,6 +326,8 @@ function Groups() {
     setSelectedStudents([]);
     setTeacherSearch('');
     setStudentSearch('');
+    setIsEditing(false);
+    setEditGroupId(null);
   };
 
   async function createGroups() {
@@ -259,7 +352,12 @@ function Groups() {
       // undefined bo'lgan fieldlarni olib tashlaymiz
       Object.keys(payload).forEach(key => payload[key] === undefined && delete payload[key])
 
-      const res = await axiosClient.post('/groups', payload)
+      let res;
+      if (isEditing) {
+        res = await axiosClient.patch(`/groups/${editGroupId}`, payload);
+      } else {
+        res = await axiosClient.post('/groups', payload);
+      }
 
       if (res.status === 201 || res.status === 200) {
         const groupsRes = await axiosClient.get('/groups/all')
@@ -523,7 +621,7 @@ function Groups() {
 
                     {/* Actions */}
                     <TableCell align="right">
-                      <IconButton size="small" onClick={(e) => e.stopPropagation()} sx={{ color: '#888', '&:hover': { color: '#7C3AED' } }}>
+                      <IconButton size="small" onClick={(e) => handleOpenMenu(e, group.id)} sx={{ color: '#888', '&:hover': { color: '#7C3AED' } }}>
                         <MoreVertIcon fontSize="small" />
                       </IconButton>
                     </TableCell>
@@ -550,10 +648,10 @@ function Groups() {
               <CloseIcon fontSize="small" />
             </IconButton>
             <Typography sx={{ fontSize: '20px', fontWeight: 700, color: '#111827', mb: 0.5 }}>
-              Guruh qo'shish
+              {isEditing ? "Guruhni tahrirlash" : "Guruh qo'shish"}
             </Typography>
             <Typography sx={{ fontSize: '13px', color: '#6b7280' }}>
-              Yangi guruh yaratish uchun quyidagi ma'lumotlarni kiriting.
+              {isEditing ? "Guruh ma'lumotlarini tahrirlash uchun quyidagilarni o'zgartiring." : "Yangi guruh yaratish uchun quyidagi ma'lumotlarni kiriting."}
             </Typography>
           </Box>
 
@@ -1001,12 +1099,63 @@ function Groups() {
           </Box>
         </Dialog>
 
+        {/* Delete Confirmation Modal */}
+        <DeleteConfirmModal
+          open={deleteModalOpen}
+          onClose={() => {
+            setDeleteModalOpen(false);
+            setSelectedGroupId(null);
+          }}
+          title="Guruhni o'chirish"
+          onConfirm={handleDeleteConfirm}
+        />
+
         {/* Error Modal */}
         <ErrorModal
           open={errorModal.open}
           onClose={() => setErrorModal({ open: false, message: '' })}
           message={errorModal.message}
         />
+
+        {/* Actions Menu */}
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleCloseMenu}
+          onClick={(e) => e.stopPropagation()}
+          PaperProps={{
+            elevation: 0,
+            sx: {
+              overflow: 'visible',
+              filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.12))',
+              mt: 1.5,
+              borderRadius: '8px',
+              minWidth: 140,
+              '& .MuiMenuItem-root': {
+                px: 2,
+                py: 1,
+                fontSize: '14px',
+                color: '#374151',
+                '&:hover': { bgcolor: '#f3f4f6' }
+              }
+            },
+          }}
+          transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+          anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        >
+          <MenuItem onClick={handleEditClick}>
+            <ListItemIcon sx={{ minWidth: '30px !important' }}>
+              <EditIcon fontSize="small" sx={{ color: '#7C3AED' }} />
+            </ListItemIcon>
+            <ListItemText primary="Tahrirlash" primaryTypographyProps={{ fontSize: '14px', fontWeight: 500 }} />
+          </MenuItem>
+          <MenuItem onClick={handleDeleteClick}>
+            <ListItemIcon sx={{ minWidth: '30px !important' }}>
+              <DeleteIcon fontSize="small" sx={{ color: '#ef4444' }} />
+            </ListItemIcon>
+            <ListItemText primary="O'chirish" primaryTypographyProps={{ fontSize: '14px', fontWeight: 500, color: '#ef4444' }} />
+          </MenuItem>
+        </Menu>
       </Box>
     </ThemeProvider>
   );

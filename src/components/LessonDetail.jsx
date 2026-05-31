@@ -2,14 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Avatar, Tabs, Tab, Switch, Button,
-  Radio, RadioGroup, FormControlLabel, TextField, IconButton, Paper
+  Radio, RadioGroup, FormControlLabel, TextField, IconButton, Paper, Select, MenuItem
 } from '@mui/material';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import axiosClient from '../api/axios';
 import Loader from './Loader';
 
-const monthsList = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
-const monthNums  = {'jan':'01','feb':'02','mar':'03','apr':'04','may':'05','jun':'06','jul':'07','aug':'08','sep':'09','oct':'10','nov':'11','dec':'12'};
+const monthsList = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+const monthNums = { 'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04', 'may': '05', 'jun': '06', 'jul': '07', 'aug': '08', 'sep': '09', 'oct': '10', 'nov': '11', 'dec': '12' };
 
 const toIso = (dayObj) => {
   const mKey = (dayObj.month || '').substring(0, 3).toLowerCase();
@@ -31,35 +31,44 @@ function LessonDetail() {
   const { id, date } = useParams();
   const navigate = useNavigate();
 
-  const [lesson, setLesson]       = useState(null);
-  const [days, setDays]           = useState([]);
-  const [loading, setLoading]     = useState(true);
+  const [lesson, setLesson] = useState(null);
+  const [days, setDays] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
   const [mavzuType, setMavzuType] = useState('boshqa');
-  const [mavzu, setMavzu]         = useState('');
-  const [tavsif, setTavsif]       = useState('');
+  const [mavzu, setMavzu] = useState('');
+  const [topics, setTopics] = useState([]);
+  const [tavsif, setTavsif] = useState('');
   const [attendance, setAttendance] = useState({});
 
   useEffect(() => {
     async function fetchAll() {
       try {
         setLoading(true);
-        const [lessonRes, schedRes] = await Promise.all([
+        const [lessonRes, schedRes, topicsRes] = await Promise.all([
           axiosClient.get(`/groups/${id}/lesson?date=${date}`),
           axiosClient.get(`/groups/${id}/schedules`),
+          axiosClient.get(`/lessons`).catch(() => ({ data: [] })),
         ]);
+        console.log(lessonRes, schedRes, topicsRes)
 
         const lessonData = lessonRes.data?.data || lessonRes.data;
         setLesson(lessonData);
 
+        const topicsData = topicsRes.data?.data || topicsRes.data || [];
+        setTopics(Array.isArray(topicsData) ? topicsData : []);
+
         if (lessonData?.attendance) {
           const att = {};
-          lessonData.attendance.forEach(s => { att[s.student_id] = s.isPresent || false; });
+          lessonData.attendance.forEach(s => {
+            const sid = s.student_id || s.id;
+            if (sid) att[sid] = s.isPresent || false;
+          });
           setAttendance(att);
         }
-        
+
         const actualLesson = lessonData?.lesson || {};
-        if (actualLesson?.topic)       setMavzu(actualLesson.topic);
+        if (actualLesson?.topic) setMavzu(actualLesson.topic);
         if (actualLesson?.description) setTavsif(actualLesson.description);
 
         // Parse schedules → find active month days
@@ -82,16 +91,38 @@ function LessonDetail() {
   }, [id, date]);
 
   const handleSave = async () => {
+    if (!mavzu) {
+      alert("Iltimos, mavzuni kiriting yoki tanlang!");
+      return;
+    }
+
     try {
-      await axiosClient.post(`/groups/${id}/lesson`, {
-        date,
+      // 1. Darsni saqlash va ID olish
+      const lessonRes = await axiosClient.post('/lessons', {
+        group_id: Number(id),
         topic: mavzu,
         description: tavsif,
-        topicType: mavzuType,
-        attendance: Object.entries(attendance).map(([studentId, attended]) => ({ studentId, attended })),
       });
+
+      const lessonId = lessonRes.data?.data?.id || lessonRes.data?.id;
+
+      // 2. Har bir o'quvchi uchun attendance
+      await Promise.all(
+        students.map(student => {
+          const sid = student.student_id || student.id;
+          return axiosClient.post('/attendance', {
+            group_id: Number(id),
+            lesson_id: lessonId,
+            student_id: Number(sid),
+            isPresent: Boolean(attendance[sid])
+          });
+        })
+      );
+
+      alert("Saqlandi!");
     } catch (err) {
       console.error(err);
+      alert("Xatolik!");
     }
   };
 
@@ -119,7 +150,7 @@ function LessonDetail() {
             <ArrowBackIosNewIcon sx={{ fontSize: '14px', color: '#6b7280', transform: 'rotate(180deg)' }} />
           </IconButton>
         </Box>
-        
+
         <Box sx={{ display: 'flex', gap: 1.5, overflowX: 'auto', pb: 1 }}>
           {days.map((dayObj, idx) => {
             const iso = toIso(dayObj);
@@ -155,12 +186,12 @@ function LessonDetail() {
       <Tabs
         value={activeTab}
         onChange={(e, v) => setActiveTab(v)}
-        sx={{ 
-          mb: 3, 
-          borderBottom: '1px solid #e5e7eb', 
-          '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, color: '#6b7280', fontSize: '14px', minWidth: 'auto', px: 3 }, 
-          '& .Mui-selected': { color: '#10b981 !important' }, 
-          '& .MuiTabs-indicator': { bgcolor: '#10b981', height: '3px', borderRadius: '3px 3px 0 0' } 
+        sx={{
+          mb: 3,
+          borderBottom: '1px solid #e5e7eb',
+          '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, color: '#6b7280', fontSize: '14px', minWidth: 'auto', px: 3 },
+          '& .Mui-selected': { color: '#10b981 !important' },
+          '& .MuiTabs-indicator': { bgcolor: '#10b981', height: '3px', borderRadius: '3px 3px 0 0' }
         }}
       >
         {teachers.length > 0
@@ -170,26 +201,24 @@ function LessonDetail() {
       </Tabs>
 
       {/* Ma'lumot */}
-      <Paper sx={{ borderRadius: '12px', border: '1px solid #e5e7eb', boxShadow: 'none', mb: 3 }}>
-        <Box sx={{ px: 3, py: 2, borderBottom: '1px solid #f3f4f6' }}>
-          <Typography sx={{ fontWeight: 700, fontSize: '15px', color: '#111827' }}>Ma'lumot</Typography>
-        </Box>
-        <Box sx={{ p: 3, display: 'flex', alignItems: 'center', gap: 3 }}>
+      <Paper sx={{ borderRadius: '12px', border: '1px solid #e5e7eb', boxShadow: 'none', mb: 3, p: 3, bgcolor: '#fafafa' }}>
+        <Typography sx={{ fontWeight: 700, fontSize: '14px', color: '#111827', mb: 2.5 }}>Ma'lumot</Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5 }}>
           <Avatar sx={{ width: 56, height: 56, bgcolor: '#cbd5e1', color: '#fff', fontSize: '20px', fontWeight: 500 }}>
             {(currentTeacher?.full_name || 'T').charAt(0).toUpperCase()}
           </Avatar>
-          <Box sx={{ minWidth: '150px' }}>
-            <Typography sx={{ fontWeight: 700, fontSize: '15px', color: '#111827', mb: 0.5 }}>{currentTeacher?.full_name || '—'}</Typography>
-            <Typography sx={{ fontSize: '13px', color: '#6b7280' }}>{currentTeacher?.role || 'Teacher'}</Typography>
-          </Box>
-          <Box sx={{ display: 'flex', gap: 6 }}>
-            <Box>
-              <Typography sx={{ fontSize: '11px', color: '#94a3b8', mb: 0.5 }}>Dars kuni</Typography>
-              <Typography sx={{ fontSize: '14px', fontWeight: 600, color: '#111827' }}>{formatDisplay(date)}</Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Box sx={{ minWidth: '140px' }}>
+              <Typography sx={{ fontWeight: 700, fontSize: '15px', color: '#111827', mb: 0.5 }}>{currentTeacher?.full_name || '—'}</Typography>
+              <Typography sx={{ fontSize: '13px', color: '#94a3b8', fontWeight: 500 }}>{currentTeacher?.role || 'Teacher'}</Typography>
             </Box>
             <Box>
-              <Typography sx={{ fontSize: '11px', color: '#94a3b8', mb: 0.5 }}>Holat</Typography>
-              <Typography sx={{ fontSize: '14px', fontWeight: 600, color: '#94a3b8' }}>{lesson?.status || "Dars o'tilmagan"}</Typography>
+              <Typography sx={{ fontSize: '11px', color: '#94a3b8', mb: 0.5, fontWeight: 600 }}>Dars kuni</Typography>
+              <Typography sx={{ fontSize: '14px', fontWeight: 700, color: '#111827' }}>{formatDisplay(date)}</Typography>
+            </Box>
+            <Box>
+              <Typography sx={{ fontSize: '11px', color: '#94a3b8', mb: 0.5, fontWeight: 600 }}>Holat</Typography>
+              <Typography sx={{ fontSize: '14px', fontWeight: 600, color: '#64748b' }}>{lesson?.status || "Dars o'tilmagan"}</Typography>
             </Box>
           </Box>
         </Box>
@@ -201,22 +230,50 @@ function LessonDetail() {
           <Typography sx={{ fontWeight: 700, fontSize: '15px', color: '#111827' }}>Yo'qlama va mavzu kiritish</Typography>
         </Box>
         <Box sx={{ p: 3 }}>
-          <RadioGroup row value={mavzuType} onChange={(e) => setMavzuType(e.target.value)} sx={{ mb: 3 }}>
-            <FormControlLabel 
-              value="reja"   
-              control={<Radio sx={{ '&.Mui-checked': { color: '#10b981' } }} />} 
-              label={<Typography sx={{ fontSize: '14px', color: mavzuType === 'reja' ? '#10b981' : '#6b7280', fontWeight: mavzuType === 'reja' ? 600 : 400 }}>O'quv reja bo'yicha</Typography>} 
+          <RadioGroup row value={mavzuType} onChange={(e) => { setMavzuType(e.target.value); setMavzu(''); }} sx={{ mb: 3 }}>
+            <FormControlLabel
+              value="reja"
+              control={<Radio sx={{ '&.Mui-checked': { color: '#10b981' } }} />}
+              label={<Typography sx={{ fontSize: '14px', color: mavzuType === 'reja' ? '#10b981' : '#6b7280', fontWeight: mavzuType === 'reja' ? 600 : 400 }}>O'quv reja bo'yicha</Typography>}
             />
-            <FormControlLabel 
-              value="boshqa" 
-              control={<Radio sx={{ '&.Mui-checked': { color: '#10b981' } }} />} 
-              label={<Typography sx={{ fontSize: '14px', color: mavzuType === 'boshqa' ? '#10b981' : '#6b7280', fontWeight: mavzuType === 'boshqa' ? 600 : 400 }}>Boshqa</Typography>} 
+            <FormControlLabel
+              value="boshqa"
+              control={<Radio sx={{ '&.Mui-checked': { color: '#10b981' } }} />}
+              label={<Typography sx={{ fontSize: '14px', color: mavzuType === 'boshqa' ? '#10b981' : '#6b7280', fontWeight: mavzuType === 'boshqa' ? 600 : 400 }}>Boshqa</Typography>}
             />
           </RadioGroup>
 
-          <Typography sx={{ fontSize: '13px', color: '#ef4444', mb: 0.5, fontWeight: 500 }}>* Mavzu</Typography>
-          <TextField fullWidth placeholder="Mavzuni kiriting..." value={mavzu} onChange={(e) => setMavzu(e.target.value)}
-            sx={{ mb: 3, '& .MuiOutlinedInput-root': { borderRadius: '8px', fontSize: '14px', bgcolor: '#f8fafc', '& fieldset': { borderColor: '#e5e7eb' } } }} />
+          <Typography sx={{ fontSize: '10px', color: '#ef4444', mb: 0.5, fontWeight: 500 }}>* Mavzu</Typography>
+          {mavzuType === 'reja' ? (
+            <Select
+              fullWidth
+              displayEmpty
+              value={mavzu}
+              onChange={(e) => setMavzu(e.target.value)}
+              sx={{
+                mb: 3,
+                borderRadius: '8px',
+                bgcolor: '#f8fafc',
+                fontSize: '14px',
+                '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
+                '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
+              }}
+            >
+              <MenuItem value="" disabled sx={{ color: '#94a3b8', fontSize: '14px' }}>Mavzuni tanlang...</MenuItem>
+              {topics.map((t, index) => {
+                const topicName = t.title || t.topic || t.name || 'Nomsiz mavzu';
+                return (
+                  <MenuItem key={t.id || index} value={topicName} sx={{ fontSize: '14px' }}>
+                    {topicName}
+                  </MenuItem>
+                );
+              })}
+            </Select>
+          ) : (
+            <TextField fullWidth placeholder="Mavzuni kiriting..." value={mavzu} onChange={(e) => setMavzu(e.target.value)}
+              sx={{ mb: 3, '& .MuiOutlinedInput-root': { borderRadius: '8px', fontSize: '14px', bgcolor: '#f8fafc', '& fieldset': { borderColor: '#e5e7eb' } } }} />
+          )}
 
           <Typography sx={{ fontSize: '13px', color: '#111827', mb: 0.5, fontWeight: 500 }}>Tavsif (ixtiyoriy)</Typography>
           <TextField fullWidth multiline rows={3} placeholder="Dars haqida qo'shimcha ma'lumot..." value={tavsif} onChange={(e) => setTavsif(e.target.value)}
@@ -230,7 +287,7 @@ function LessonDetail() {
               <Typography sx={{ fontSize: '13px', fontWeight: 600, color: '#6b7280', textAlign: 'right' }}>Keldi</Typography>
             </Box>
             {students.length > 0 ? students.map((student, sIdx) => (
-              <Box key={student.student_id || sIdx} sx={{ display: 'grid', gridTemplateColumns: '60px 1fr 100px', alignItems: 'center', borderBottom: '1px solid #f8fafc', py: 1.5, px: 2 }}>
+              <Box key={student.student_id || student.id || sIdx} sx={{ display: 'grid', gridTemplateColumns: '60px 1fr 100px', alignItems: 'center', borderBottom: '1px solid #f8fafc', py: 1.5, px: 2 }}>
                 <Typography sx={{ fontSize: '14px', color: '#111827', fontWeight: 500 }}>{sIdx + 1}</Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                   <Avatar src={student.photo ? `https://najot-edu.softwareengineer.uz/uploads/${student.photo}` : ''} sx={{ width: 32, height: 32, bgcolor: '#cbd5e1', color: '#fff', fontSize: '13px' }}>
@@ -240,8 +297,11 @@ function LessonDetail() {
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                   <Switch
-                    checked={!!attendance[student.student_id]}
-                    onChange={(e) => setAttendance(prev => ({ ...prev, [student.student_id]: e.target.checked }))}
+                    checked={!!attendance[student.student_id || student.id]}
+                    onChange={(e) => {
+                      const sid = student.student_id || student.id;
+                      if (sid) setAttendance(prev => ({ ...prev, [sid]: e.target.checked }));
+                    }}
                     sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: '#10b981' }, '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { bgcolor: '#10b981' } }}
                   />
                 </Box>
