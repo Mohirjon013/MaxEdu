@@ -33,6 +33,7 @@ function LessonDetail() {
   const navigate = useNavigate();
 
   const [lesson, setLesson] = useState(null);
+  const [groupData, setGroupData] = useState(null);
   const [days, setDays] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
@@ -68,12 +69,16 @@ function LessonDetail() {
     async function fetchAll() {
       try {
         setLoading(true);
-        const [lessonRes, schedRes, topicsRes] = await Promise.all([
+        const [lessonRes, schedRes, topicsRes, groupRes] = await Promise.all([
           axiosClient.get(`/groups/${id}/lesson?date=${date}`),
           axiosClient.get(`/groups/${id}/schedules`),
           axiosClient.get(`/lessons/my/group/${id}`).catch(() => ({ data: { data: [] } })),
+          axiosClient.get(`/groups/${id}`).catch(() => ({ data: { data: {} } })),
         ]);
-        console.log(lessonRes, schedRes, topicsRes)
+        console.log(lessonRes, schedRes, topicsRes, groupRes);
+
+        const gData = groupRes.data?.data || groupRes.data || {};
+        setGroupData(gData);
 
         const lessonData = lessonRes.data?.data || lessonRes.data;
         setLesson(lessonData);
@@ -149,7 +154,7 @@ function LessonDetail() {
 
   if (loading) return <Loader fullScreen />;
 
-  const teachers = lesson?.lesson?.teachers || lesson?.teachers || [];
+  const teachers = lesson?.lesson?.teachers || lesson?.teachers || groupData?.teachers || [];
   const currentTeacher = teachers[activeTab] || teachers[0] || {};
   const students = lesson?.attendance || [];
 
@@ -157,10 +162,21 @@ function LessonDetail() {
 
   return (
     <Box sx={{ fontFamily: 'Roboto, sans-serif', pb: 4 }}>
+      {/* Back Button */}
+      <Box
+        sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, cursor: 'pointer', '&:hover': { opacity: 0.8 }, width: 'max-content' }}
+        onClick={() => navigate(`/dashboard/groups/${id}`)}
+      >
+        <ArrowBackIosNewIcon sx={{ fontSize: '14px', color: '#111827' }} />
+        <Typography sx={{ fontWeight: 700, fontSize: '20px', color: '#111827' }}>
+          Guruhga qaytish
+        </Typography>
+      </Box>
+
       {/* Top Header (Days) */}
       <Paper sx={{ borderRadius: '12px', border: '1px solid #e5e7eb', boxShadow: 'none', mb: 3, p: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-          <IconButton size="small" onClick={() => navigate(`/dashboard/groups/${id}`)} sx={{ border: '1px solid #e5e7eb', borderRadius: '8px', p: 1 }}>
+          <IconButton size="small" sx={{ border: '1px solid #e5e7eb', borderRadius: '8px', p: 1 }}>
             <ArrowBackIosNewIcon sx={{ fontSize: '14px', color: '#6b7280' }} />
           </IconButton>
           <Typography sx={{ fontWeight: 700, fontSize: '15px', color: '#111827' }}>
@@ -227,10 +243,8 @@ function LessonDetail() {
           '& .MuiTabs-indicator': { bgcolor: '#10b981', height: '3px', borderRadius: '3px 3px 0 0' }
         }}
       >
-        {teachers.length > 0
-          ? teachers.map((t, i) => <Tab key={i} label={t.role || `Teacher ${i + 1}`} />)
-          : [<Tab key={0} label="Assistant" />, <Tab key={1} label="Teacher" />]
-        }
+        <Tab label="Assistant" />
+        <Tab label="Teacher" />
       </Tabs>
 
       {/* Ma'lumot */}
@@ -243,7 +257,7 @@ function LessonDetail() {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <Box sx={{ minWidth: '140px' }}>
               <Typography sx={{ fontWeight: 700, fontSize: '15px', color: '#111827', mb: 0.5 }}>{currentTeacher?.full_name || '—'}</Typography>
-              <Typography sx={{ fontSize: '13px', color: '#94a3b8', fontWeight: 500 }}>{currentTeacher?.role || 'Teacher'}</Typography>
+              <Typography sx={{ fontSize: '13px', color: '#94a3b8', fontWeight: 500 }}>{currentTeacher?.role || (activeTab === 0 ? 'Assistant' : 'Teacher')}</Typography>
             </Box>
             <Box>
               <Typography sx={{ fontSize: '11px', color: '#94a3b8', mb: 0.5, fontWeight: 600 }}>Dars kuni</Typography>
@@ -251,7 +265,9 @@ function LessonDetail() {
             </Box>
             <Box>
               <Typography sx={{ fontSize: '11px', color: '#94a3b8', mb: 0.5, fontWeight: 600 }}>Holat</Typography>
-              <Typography sx={{ fontSize: '14px', fontWeight: 600, color: '#64748b' }}>{lesson?.status || "Dars o'tilmagan"}</Typography>
+              <Typography sx={{ fontSize: '14px', fontWeight: 600, color: lesson?.lesson ? '#7C3AED' : '#64748b' }}>
+                {lesson?.lesson ? "Dars o'tildi" : "Dars o'tilmagan"}
+              </Typography>
             </Box>
           </Box>
         </Box>

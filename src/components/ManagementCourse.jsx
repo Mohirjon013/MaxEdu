@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useTransition } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, Typography, Button, Paper, IconButton, Drawer, TextField, Select, MenuItem, ThemeProvider, createTheme } from "@mui/material";
 import { DeleteOutlined, EditOutlined, Close as CloseIcon } from "@mui/icons-material";
@@ -53,7 +53,7 @@ const ManagementCourse = () => {
     duration_month: 0,
     duration_hours: 0
   })
-  const [isPending, startTransition] = useTransition();
+  const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editCourseId, setEditCourseId] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -70,18 +70,19 @@ const ManagementCourse = () => {
 
   useEffect(() => {
     async function getCourse() {
+      setIsLoading(true);
       try{
         const res = await axiosClient.get(isArchiveView ? '/courses/archive' : '/courses')
         if(res.status === 200){
           const data = res.data?.data ?? res.data ?? [];
-          startTransition(() => {
-            setCourse(Array.isArray(data) ? data : []);
-          })
+          setCourse(Array.isArray(data) ? data : []);
         }
       }
       catch(error){
         console.log(error.message);
-        setErrorModal({ open: true, message: `Arxiv ma'lumotlarini yuklashda xatolik: ${error.message}` });
+        setErrorModal({ open: true, message: `Ma'lumotlarini yuklashda xatolik: ${error.message}` });
+      } finally {
+        setIsLoading(false);
       }
     }
     getCourse()
@@ -245,7 +246,7 @@ const ManagementCourse = () => {
           </Box>
 
           {/* Grid */}
-          {isPending ? 
+          {isLoading ? 
 
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '395px' }}>
             <img src={loading} alt="loading" width={90} height={90} />

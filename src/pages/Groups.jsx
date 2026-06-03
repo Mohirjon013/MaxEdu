@@ -584,88 +584,88 @@ function Groups() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                  groups.map((group) => (
-                  <TableRow key={group.id} hover onClick={() => navigate(`/dashboard/groups/${group.id}`)} sx={{ cursor: 'pointer', '& td': { borderBottom: '1px solid #eee' } }}>
-                    {/* Status */}
-                    <TableCell align="center">
-                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5 }}>
-                        <Switch
-                          checked={groupStatuses[group.id]}
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={(e) => { e.stopPropagation(); toggleStatus(group.id); }}
-                          size="small"
-                          color="primary"
-                        />
-                        <Chip
-                          label={groupStatuses[group.id] ? 'FAOL' : 'NOFAOL'}
-                          size="small"
-                          sx={{
-                            width: '60px',
-                            fontSize: '11px', fontWeight: 700, height: '22px',
-                            bgcolor: groupStatuses[group.id] ? '#dcfce7' : '#fee2e2',
-                            color: groupStatuses[group.id] ? '#16a34a' : '#dc2626',
-                          }}
-                        />
-                      </Box>
-                    </TableCell>
+                    groups.map((group) => (
+                      <TableRow key={group.id} hover onClick={() => navigate(`/dashboard/groups/${group.id}`)} sx={{ cursor: 'pointer', '& td': { borderBottom: '1px solid #eee' } }}>
+                        {/* Status */}
+                        <TableCell align="center">
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5 }}>
+                            <Switch
+                              checked={groupStatuses[group.id]}
+                              onClick={(e) => e.stopPropagation()}
+                              onChange={(e) => { e.stopPropagation(); toggleStatus(group.id); }}
+                              size="small"
+                              color="primary"
+                            />
+                            <Chip
+                              label={groupStatuses[group.id] ? 'FAOL' : 'NOFAOL'}
+                              size="small"
+                              sx={{
+                                width: '60px',
+                                fontSize: '11px', fontWeight: 700, height: '22px',
+                                bgcolor: groupStatuses[group.id] ? '#dcfce7' : '#fee2e2',
+                                color: groupStatuses[group.id] ? '#16a34a' : '#dc2626',
+                              }}
+                            />
+                          </Box>
+                        </TableCell>
 
-                    {/* Guruh nomi */}
-                    <TableCell align="center">
-                      <Typography sx={{ fontWeight: 700, color: '#1a1a1a', fontSize: '14px' }}>
-                        {group.name}
-                      </Typography>
-                    </TableCell>
+                        {/* Guruh nomi */}
+                        <TableCell align="center">
+                          <Typography sx={{ fontWeight: 700, color: '#1a1a1a', fontSize: '14px' }}>
+                            {group.name}
+                          </Typography>
+                        </TableCell>
 
-                    {/* Kurs */}
-                    <TableCell align="center">
-                      <Chip
-                        label={group.courses?.name || group.course?.name || '—'}
-                        size="small"
-                        sx={{
-                          bgcolor: '#fce7f3', color: '#db2777',
-                          fontWeight: 600, fontSize: '12px', borderRadius: '6px'
-                        }}
-                      />
-                    </TableCell>
+                        {/* Kurs */}
+                        <TableCell align="center">
+                          <Chip
+                            label={group.courses?.name || group.course?.name || '—'}
+                            size="small"
+                            sx={{
+                              bgcolor: '#fce7f3', color: '#db2777',
+                              fontWeight: 600, fontSize: '12px', borderRadius: '6px'
+                            }}
+                          />
+                        </TableCell>
 
-                    {/* Davomiyligi */}
-                    <TableCell align="center" sx={{ color: '#555', fontSize: '14px' }}>{group.courses?.duration_month || group.course?.duration_month || 0} oy</TableCell>
+                        {/* Davomiyligi */}
+                        <TableCell align="center" sx={{ color: '#555', fontSize: '14px' }}>{group.courses?.duration_month || group.course?.duration_month || 0} oy</TableCell>
 
-                    {/* Dars vaqti */}
-                    <TableCell align="center">
-                      <Typography sx={{ fontWeight: 600, color: '#1a1a1a', fontSize: '14px' }}>
-                        {(group.start_time || group.time || group.class_time || '')?.slice(0, 5)}
-                      </Typography>
-                      <Typography sx={{ fontSize: '12px', color: '#888' }}>
-                        {group.week_day?.map(day => WEEK_MAP[day]).join(', ')}
-                      </Typography>
-                    </TableCell>
+                        {/* Dars vaqti */}
+                        <TableCell align="center">
+                          <Typography sx={{ fontWeight: 600, color: '#1a1a1a', fontSize: '14px' }}>
+                            {(group.start_time || group.time || group.class_time || '')?.slice(0, 5)}
+                          </Typography>
+                          <Typography sx={{ fontSize: '12px', color: '#888' }}>
+                            {group.week_day?.map(day => WEEK_MAP[day]).join(', ')}
+                          </Typography>
+                        </TableCell>
 
-                    {/* Xona */}
-                    <TableCell align="center" sx={{ color: '#555', fontSize: '14px' }}>
-                      {group.rooms?.name || group.room?.name || group.room || '—'}
-                    </TableCell>
+                        {/* Xona */}
+                        <TableCell align="center" sx={{ color: '#555', fontSize: '14px' }}>
+                          {group.rooms?.name || group.room?.name || group.room || '—'}
+                        </TableCell>
 
-                    {/* O'qituvchi */}
-                    <TableCell align="center">
-                      <Typography sx={{ fontWeight: 600, color: '#1a1a1a', fontSize: '14px' }}>
-                        {group.teachers?.length > 0 ? group.teachers[0].full_name : '—'}
-                      </Typography>
-                    </TableCell>
+                        {/* O'qituvchi */}
+                        <TableCell align="center">
+                          <Typography sx={{ fontWeight: 600, color: '#1a1a1a', fontSize: '14px' }}>
+                            {group.teachers?.length > 0 ? group.teachers[0].full_name : '—'}
+                          </Typography>
+                        </TableCell>
 
-                    {/* Talabalar */}
-                    <TableCell align="center" sx={{ color: '#555', fontSize: '14px', fontWeight: 500 }}>
-                      {group.student_count ?? group.students?.length ?? 0}
-                    </TableCell>
+                        {/* Talabalar */}
+                        <TableCell align="center" sx={{ color: '#555', fontSize: '14px', fontWeight: 500 }}>
+                          {group.student_count ?? group.students?.length ?? 0}
+                        </TableCell>
 
-                    {/* Actions */}
-                    <TableCell align="right">
-                      <IconButton size="small" onClick={(e) => handleOpenMenu(e, group.id)} sx={{ color: '#888', '&:hover': { color: '#7C3AED' } }}>
-                        <MoreVertIcon fontSize="small" />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                  ))
+                        {/* Actions */}
+                        <TableCell align="right">
+                          <IconButton size="small" onClick={(e) => handleOpenMenu(e, group.id)} sx={{ color: '#888', '&:hover': { color: '#7C3AED' } }}>
+                            <MoreVertIcon fontSize="small" />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))
                   )}
                 </TableBody>
               </Table>
@@ -1189,13 +1189,13 @@ function Groups() {
             <ListItemIcon sx={{ minWidth: '30px !important' }}>
               <EditIcon fontSize="small" sx={{ color: '#7C3AED' }} />
             </ListItemIcon>
-            <ListItemText primary={<Typography sx={{ fontSize: '14px', fontWeight: 500 }}>Tahrirlash</Typography>} />
+            <ListItemText primary={<Typography sx={{ fontSize: '14px', fontWeight: 500 }}>Edit</Typography>} />
           </MenuItem>
           <MenuItem onClick={handleDeleteClick}>
             <ListItemIcon sx={{ minWidth: '30px !important' }}>
               <DeleteIcon fontSize="small" sx={{ color: '#ef4444' }} />
             </ListItemIcon>
-            <ListItemText primary={<Typography sx={{ fontSize: '14px', fontWeight: 500, color: '#ef4444' }}>O'chirish</Typography>} />
+            <ListItemText primary={<Typography sx={{ fontSize: '14px', fontWeight: 500, color: '#ef4444' }}>Delete</Typography>} />
           </MenuItem>
         </Menu>
       </Box>

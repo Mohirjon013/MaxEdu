@@ -28,6 +28,7 @@ function Loginform() {
             setTimeout(() => {
                 setOpen(false)
                 navigate('/dashboard')
+                setInput({ phone: '', password: '' })
             }, 1000);
 
             console.log(res.data);
@@ -37,9 +38,9 @@ function Loginform() {
             setOpenError(true)
             setTimeout(() => {
                 setOpenError(false)
+                setInput({ phone: '', password: '' })
             }, 1000);
         }
-        setInput({phone:'',password:''})
     }
     return (
         <form onSubmit={loginUser} style={{ width: "100%", display: "flex", flexDirection: "column", gap: "clamp(10px, 1.5vh, 14px)" }}>

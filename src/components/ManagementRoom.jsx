@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useTransition } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, Typography, Button, Paper, IconButton, Drawer, TextField, ThemeProvider, createTheme } from "@mui/material";
 import { DeleteOutlined, EditOutlined, RefreshOutlined, Close as CloseIcon } from "@mui/icons-material";
@@ -38,7 +38,7 @@ const theme = createTheme({
 
 const ManagementRoom = () => {
   const navigate = useNavigate();
-  const [isPending, startTransition] = useTransition();
+  const [isLoading, setIsLoading] = useState(true);
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [room, setRoom] = useState([]);
@@ -60,16 +60,17 @@ const ManagementRoom = () => {
   }
 
   async function fetchRooms() {
+    setIsLoading(true);
     try {
       const res = await axiosClient.get(isArchiveView ? '/rooms/arxive' : '/rooms');
       if (res.status === 200) {
         const data = res.data?.data ?? res.data ?? [];
-        startTransition(() => {
-          setRoom(Array.isArray(data) ? data : []);
-        });
+        setRoom(Array.isArray(data) ? data : []);
       }
     } catch (error) {
       console.log(error.message);
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -162,14 +163,9 @@ const ManagementRoom = () => {
         </Box>
 
         {/* Main Card */}
-        {isPending ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '480px' }}>
-            <img src={loading} alt="loading" width={90} height={90} />
-          </Box>
-        ) : (
-          <Paper sx={{ height: '480px', bgcolor: '#fff', borderRadius: '12px', p: 3, border: '1px solid #f3f4f6', boxShadow: '0 2px 10px rgba(0,0,0,0.04)', overflow: 'hidden' }}>
-            {/* Card Header */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Paper sx={{ height: '480px', bgcolor: '#fff', borderRadius: '12px', p: 3, border: '1px solid #f3f4f6', boxShadow: '0 2px 10px rgba(0,0,0,0.04)', overflow: 'hidden' }}>
+          {/* Card Header */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Typography sx={{ fontSize: '26px', fontWeight: 700, color: '#111827' }}>
                   Xonalar {isArchiveView && <span style={{ color: '#7C3AED', fontSize: '24px' }}>(Arxiv)</span>}
@@ -211,8 +207,13 @@ const ManagementRoom = () => {
             </Box>
 
             {/* Grid */}
-            <Box sx={{
-              display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 2.5,
+            {isLoading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '380px' }}>
+                <img src={loading} alt="loading" width={90} height={90} />
+              </Box>
+            ) : (
+              <Box sx={{
+                display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 2.5,
               maxHeight: '380px', overflowY: 'auto', pr: 1,
               '&::-webkit-scrollbar': { width: '4px' },
               '&::-webkit-scrollbar-track': { background: 'transparent' },
@@ -249,8 +250,8 @@ const ManagementRoom = () => {
                 </Box>
               )}
             </Box>
-          </Paper>
-        )}
+          )}
+        </Paper>
 
         {/* Drawer */}
         <Drawer anchor="right" open={isDrawerOpen} onClose={() => { setIsDrawerOpen(false); resetForm(); }}
