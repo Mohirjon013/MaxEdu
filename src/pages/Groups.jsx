@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, startTransition } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -26,7 +26,8 @@ import {
   Select,
   Menu,
   ListItemIcon,
-  ListItemText
+  ListItemText,
+  CircularProgress
 } from '@mui/material';
 import GroupsIcon from '@mui/icons-material/Groups';
 import SchoolIcon from '@mui/icons-material/School';
@@ -37,6 +38,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CloseIcon from '@mui/icons-material/Close';
 import axiosClient from '../api/axios';
+import loading from "../assets/images/loading.gif";
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
 import ErrorModal from '../components/ErrorModal';
 
@@ -99,6 +101,7 @@ function Groups() {
   const [availableStudents, setAvailableStudents] = useState([])
   const [availableRooms, setAvailableRooms] = useState([])
   const [errorModal, setErrorModal] = useState({ open: false, message: '' })
+  const [isLoading, setIsLoading] = useState(false);
 
 
 
@@ -152,7 +155,7 @@ function Groups() {
         room_id: matchedRoom?.id || null,
         start_date: data.start_date?.split('T')[0] || '',
         week_day: data.week_day || [],
-        start_time: (data.start_time || '').slice(0, 5),
+        start_time: (data.start_time || '').slice(0, 5).replace('.', ':'),
         max_student: data.max_student ?? groups.find(g => g.id === selectedGroupId)?.max_student ?? null
       });
 
@@ -279,33 +282,57 @@ function Groups() {
   };
 
 
+  const drawerDataLoaded = useRef(false);
+
+  // Sahifa yuklanishida faqat guruhlar va kurslarni olib keladi (tez)
   useEffect(() => {
+    drawerDataLoaded.current = false; // tab o'zgarganda qayta yuklaydi
     async function handleGroups() {
+      setIsLoading(true);
       try {
         const endpoint = activeTab === 'arxiv' ? '/groups/archive' : '/groups/all';
-        const [groupsRes, coursesRes, teachersRes, studentRes, roomsRes] = await Promise.all([
+        const [groupsRes, coursesRes] = await Promise.all([
           axiosClient.get(endpoint),
-          axiosClient.get('/courses'),
-          axiosClient.get('/teachers'),
-          axiosClient.get('/students'),
-          axiosClient.get('/rooms'),
+          axiosClient.get('/courses?limit=33'),
         ])
         const fetchedGroups = groupsRes.data?.data ?? groupsRes.data ?? [];
         const safeGroups = Array.isArray(fetchedGroups) ? fetchedGroups : [];
 
-        setGroups(safeGroups)
-        setCourses(coursesRes.data.data)
-        setAvailableTeacherss(teachersRes.data.data)
-        setAvailableStudents(studentRes.data.data)
-        setAvailableRooms(roomsRes.data.data)
-        setGroupStatuses(safeGroups.reduce((acc, g) => ({ ...acc, [g.id]: g.is_active ?? true }), {}))
+        startTransition(() => {
+          setGroups(safeGroups)
+          setCourses(coursesRes.data.data)
+          setGroupStatuses(safeGroups.reduce((acc, g) => ({ ...acc, [g.id]: g.is_active ?? true }), {}))
+        });
       } catch (err) {
         console.error(err)
         setErrorModal({ open: true, message: 'Ma\'lumotlarni yuklashda xato yuz berdi: ' + (err.response?.data?.message || err.message) })
+      } finally {
+        setIsLoading(false);
       }
     }
     handleGroups()
   }, [activeTab])
+
+  // Drawer ochilganda teachers/students/rooms ni lazy load qiladi
+  useEffect(() => {
+    if (!isDrawerOpen || drawerDataLoaded.current) return;
+    async function loadDrawerData() {
+      try {
+        const [teachersRes, studentRes, roomsRes] = await Promise.all([
+          axiosClient.get('/teachers?limit=33'),
+          axiosClient.get('/students?limit=33'),
+          axiosClient.get('/rooms?limit=33'),
+        ])
+        setAvailableTeacherss(teachersRes.data.data)
+        setAvailableStudents(studentRes.data.data)
+        setAvailableRooms(roomsRes.data.data)
+        drawerDataLoaded.current = true;
+      } catch (err) {
+        console.error('Drawer data yuklashda xato:', err)
+      }
+    }
+    loadDrawerData();
+  }, [isDrawerOpen])
 
   const handleCloseDrawer = () => {
     setIsDrawerOpen(false);
@@ -526,26 +553,38 @@ function Groups() {
             '&::-webkit-scrollbar-thumb': { background: '#e5e7eb', borderRadius: '10px' },
             '&::-webkit-scrollbar-thumb:hover': { background: '#d1d5db' },
           }}>
-            <Table sx={{ minWidth: 900 }} stickyHeader>
-              <TableHead sx={{ bgcolor: '#fafafa' }}>
-                <TableRow>
-                  <TableCell align="center" sx={{ fontWeight: 600, color: '#555', fontSize: '13px', bgcolor: '#fafafa' }}>Status</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 600, color: '#555', fontSize: '13px', bgcolor: '#fafafa' }}>Guruh nomi</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 600, color: '#555', fontSize: '13px', bgcolor: '#fafafa' }}>Kurs</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 600, color: '#555', fontSize: '13px', bgcolor: '#fafafa' }}>Davomiyligi</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 600, color: '#555', fontSize: '13px', bgcolor: '#fafafa' }}>Dars vaqti</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 600, color: '#555', fontSize: '13px', bgcolor: '#fafafa' }}>Xona</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 600, color: '#555', fontSize: '13px', bgcolor: '#fafafa' }}>O'qituvchi</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 600, color: '#555', fontSize: '13px', bgcolor: '#fafafa' }}>Talabalar</TableCell>
-                  <TableCell align="right" sx={{ bgcolor: '#fafafa' }}>
-                    <IconButton size="small" sx={{ color: '#888', }}>
-                      <RefreshIcon fontSize="small" />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {groups.map((group) => (
+            {isLoading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', minHeight: '395px' }}>
+                <img src={loading} alt="loading" width={90} height={90} />
+              </Box>
+            ) : (
+              <Table sx={{ minWidth: 900 }} stickyHeader>
+                <TableHead sx={{ bgcolor: '#fafafa' }}>
+                  <TableRow>
+                    <TableCell align="center" sx={{ fontWeight: 600, color: '#555', fontSize: '13px', bgcolor: '#fafafa' }}>Status</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 600, color: '#555', fontSize: '13px', bgcolor: '#fafafa' }}>Guruh nomi</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 600, color: '#555', fontSize: '13px', bgcolor: '#fafafa' }}>Kurs</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 600, color: '#555', fontSize: '13px', bgcolor: '#fafafa' }}>Davomiyligi</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 600, color: '#555', fontSize: '13px', bgcolor: '#fafafa' }}>Dars vaqti</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 600, color: '#555', fontSize: '13px', bgcolor: '#fafafa' }}>Xona</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 600, color: '#555', fontSize: '13px', bgcolor: '#fafafa' }}>O'qituvchi</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 600, color: '#555', fontSize: '13px', bgcolor: '#fafafa' }}>Talabalar</TableCell>
+                    <TableCell align="right" sx={{ bgcolor: '#fafafa' }}>
+                      <IconButton size="small" sx={{ color: '#888', }}>
+                        <RefreshIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {groups.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={9} align="center" sx={{ py: 4, color: '#6b7280', fontSize: '14px' }}>
+                        Ma'lumot topilmadi
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                  groups.map((group) => (
                   <TableRow key={group.id} hover onClick={() => navigate(`/dashboard/groups/${group.id}`)} sx={{ cursor: 'pointer', '& td': { borderBottom: '1px solid #eee' } }}>
                     {/* Status */}
                     <TableCell align="center">
@@ -626,9 +665,11 @@ function Groups() {
                       </IconButton>
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                  ))
+                  )}
+                </TableBody>
+              </Table>
+            )}
           </TableContainer>
         </Paper>
 
@@ -846,7 +887,7 @@ function Groups() {
                     max_student: val === '' ? null : Number(val)
                   }))
                 }}
-                inputProps={{ min: 1 }}
+                slotProps={{ htmlInput: { min: 1 } }}
               />
             </Box>
 
@@ -860,8 +901,9 @@ function Groups() {
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, px: 1.5, pt: 1.5 }}>
                     {selectedTeachers.map(id => {
                       const teacher = availableTeacherss.find(item => item.id === id)
+                      if (!teacher) return null;
                       return (
-                        <Chip key={id} label={teacher?.full_name} color="primary" onDelete={() => toggleTeacher(id)} size="small"
+                        <Chip key={id} label={teacher.full_name} color="primary" onDelete={() => toggleTeacher(id)} size="small"
                           sx={{ bgcolor: '#ede7f6', color: '#7C3AED', fontWeight: 500, borderRadius: '16px', '& .MuiChip-deleteIcon': { color: '#7C3AED', '&:hover': { color: '#5B21B6' } } }}
                         />
                       )
@@ -889,9 +931,9 @@ function Groups() {
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, px: 1.5, pt: 1.5 }}>
                     {selectedStudents.map(id => {
                       const student = availableStudents.find(item => item.id === id)
-
+                      if (!student) return null;
                       return (
-                        <Chip key={id} label={student?.full_name} color="primary" onDelete={() => toggleStudent(id)} size="small"
+                        <Chip key={id} label={student.full_name} color="primary" onDelete={() => toggleStudent(id)} size="small"
                           sx={{ bgcolor: '#ede7f6', color: '#7C3AED', fontWeight: 500, borderRadius: '16px', '& .MuiChip-deleteIcon': { color: '#7C3AED', '&:hover': { color: '#5B21B6' } } }}
                         />
                       )
@@ -1147,13 +1189,13 @@ function Groups() {
             <ListItemIcon sx={{ minWidth: '30px !important' }}>
               <EditIcon fontSize="small" sx={{ color: '#7C3AED' }} />
             </ListItemIcon>
-            <ListItemText primary="Tahrirlash" primaryTypographyProps={{ fontSize: '14px', fontWeight: 500 }} />
+            <ListItemText primary={<Typography sx={{ fontSize: '14px', fontWeight: 500 }}>Tahrirlash</Typography>} />
           </MenuItem>
           <MenuItem onClick={handleDeleteClick}>
             <ListItemIcon sx={{ minWidth: '30px !important' }}>
               <DeleteIcon fontSize="small" sx={{ color: '#ef4444' }} />
             </ListItemIcon>
-            <ListItemText primary="O'chirish" primaryTypographyProps={{ fontSize: '14px', fontWeight: 500, color: '#ef4444' }} />
+            <ListItemText primary={<Typography sx={{ fontSize: '14px', fontWeight: 500, color: '#ef4444' }}>O'chirish</Typography>} />
           </MenuItem>
         </Menu>
       </Box>

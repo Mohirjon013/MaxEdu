@@ -39,6 +39,7 @@ const theme = createTheme({
 
 function Teacher() {
   const [isPending, startTransition] = useTransition();
+  const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [page, setPage] = useState(1);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -53,6 +54,7 @@ function Teacher() {
   const [searchQuery, setSearchQuery] = useState('');
   const [errorModal, setErrorModal] = useState({ open: false, message: "" });
   const fileInputRef = useRef(null);
+  const groupsLoaded = useRef(false);
 
   const [teacher, setTeacher] = useState([]);
   const [availableGroups, setAvailableGroups] = useState([]);
@@ -79,26 +81,42 @@ function Teacher() {
     }));
   };
 
+  // Sahifaga kiranda faqat o'qituvchilarni yukla
   useEffect(() => {
+    groupsLoaded.current = false;
     async function fetchData() {
+      setIsLoading(true);
       try {
-        const [teachersRes, groupsRes] = await Promise.all([
-          axiosClient.get(isArchiveView ? '/teachers/archive' : '/teachers'),
-          axiosClient.get('/groups/all')
-        ]);
-        if (teachersRes.status === 200) {
-          startTransition(() => setTeacher(teachersRes.data.data));
+        const res = await axiosClient.get(isArchiveView ? '/teachers/archive' : '/teachers');
+        if (res.status === 200) {
+          startTransition(() => setTeacher(res.data.data));
         }
-        if (groupsRes.status === 200) {
-          const gData = groupsRes.data?.data || groupsRes.data || [];
+      } catch (error) {
+        console.log(error.message);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchData();
+  }, [isArchiveView]);
+
+  // Drawer ochilganda guruhlarni lazy load qiladi
+  useEffect(() => {
+    if (!isDrawerOpen || groupsLoaded.current) return;
+    async function fetchGroups() {
+      try {
+        const res = await axiosClient.get('/groups/all');
+        if (res.status === 200) {
+          const gData = res.data?.data || res.data || [];
           setAvailableGroups(Array.isArray(gData) ? gData : []);
+          groupsLoaded.current = true;
         }
       } catch (error) {
         console.log(error.message);
       }
     }
-    fetchData();
-  }, [isArchiveView]);
+    fetchGroups();
+  }, [isDrawerOpen]);
 
   function resetForm() {
     setCreateTeacher({ full_name: '', email: '', password: '', phone: '', address: '', groups: [] });
@@ -184,7 +202,7 @@ function Teacher() {
       });
 
       if (data.photo) {
-        setSelectedImage(`https://najot-edu.softwareengineer.uz/uploads/${data.photo}`);
+        setSelectedImage(`https://najot-edu.softwareengineer.uz/files/${data.photo}`);
       } else {
         setSelectedImage(null);
       }
@@ -283,7 +301,7 @@ function Teacher() {
           </Box>
 
           <TableContainer sx={{ overflowY: 'auto', pr: 1, flex: 1 }} >
-            {isPending ? (
+            {isLoading || isPending ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '395px', }}>
                 <img src={loading} alt="loading" width={90} height={90} />
               </Box>
@@ -307,7 +325,7 @@ function Teacher() {
                       <TableCell padding="checkbox"><Checkbox color="primary" /></TableCell>
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                          <Avatar src={teacherItem.avatar || teacherItem.image} alt={teacherItem.full_name} sx={{ width: 32, height: 32, fontSize: '14px' }}>
+                          <Avatar src={teacherItem.photo || teacherItem.avatar || teacherItem.image ? `https://najot-edu.softwareengineer.uz/files/${teacherItem.photo || teacherItem.avatar || teacherItem.image}` : ''} alt={teacherItem.full_name} sx={{ width: 32, height: 32, fontSize: '14px' }}>
                             {teacherItem.full_name?.charAt(0)}
                           </Avatar>
                           <Typography sx={{ fontWeight: 500, color: '#222', fontSize: '14px' }}>{teacherItem.full_name}</Typography>

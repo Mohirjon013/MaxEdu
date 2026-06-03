@@ -2,11 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Avatar, Tabs, Tab, Switch, Button,
-  Radio, RadioGroup, FormControlLabel, TextField, IconButton, Paper, Select, MenuItem
+  Radio, RadioGroup, FormControlLabel, TextField, IconButton, Paper, Select, MenuItem, Snackbar, Alert
 } from '@mui/material';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import axiosClient from '../api/axios';
 import Loader from './Loader';
+import ErrorModal from './ErrorModal';
 
 const monthsList = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 const monthNums = { 'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04', 'may': '05', 'jun': '06', 'jul': '07', 'aug': '08', 'sep': '09', 'oct': '10', 'nov': '11', 'dec': '12' };
@@ -40,6 +41,28 @@ function LessonDetail() {
   const [topics, setTopics] = useState([]);
   const [tavsif, setTavsif] = useState('');
   const [attendance, setAttendance] = useState({});
+  const [errorModal, setErrorModal] = useState({ open: false, message: '' });
+  const [successSnackbar, setSuccessSnackbar] = useState(false);
+
+  // const today = new Date();
+  // today.setHours(0, 0, 0, 0);
+
+  const parseIsoToDate = (isoString) => {
+    if (!isoString) return new Date();
+    const parts = isoString.split('-');
+    if (parts.length !== 3) return new Date();
+    const dt = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    dt.setHours(0, 0, 0, 0);
+    return dt;
+  };
+
+  const currentDateObj = parseIsoToDate(date);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const isCurrentDateFuture = currentDateObj > today;
+  const isCurrentDatePast = currentDateObj < today;
+  const isReadOnly = isCurrentDateFuture || isCurrentDatePast;
 
   useEffect(() => {
     async function fetchAll() {
@@ -48,7 +71,7 @@ function LessonDetail() {
         const [lessonRes, schedRes, topicsRes] = await Promise.all([
           axiosClient.get(`/groups/${id}/lesson?date=${date}`),
           axiosClient.get(`/groups/${id}/schedules`),
-          axiosClient.get(`/lessons`).catch(() => ({ data: [] })),
+          axiosClient.get(`/lessons/my/group/${id}`).catch(() => ({ data: { data: [] } })),
         ]);
         console.log(lessonRes, schedRes, topicsRes)
 
@@ -60,9 +83,8 @@ function LessonDetail() {
 
         if (lessonData?.attendance) {
           const att = {};
-          lessonData.attendance.forEach(s => {
-            const sid = s.student_id || s.id;
-            if (sid) att[sid] = s.isPresent || false;
+          lessonData.attendance.forEach((s, idx) => {
+            att[idx] = s.isPresent || false;
           });
           setAttendance(att);
         }
@@ -91,38 +113,37 @@ function LessonDetail() {
   }, [id, date]);
 
   const handleSave = async () => {
+    if (isCurrentDateFuture) return;
+
     if (!mavzu) {
-      alert("Iltimos, mavzuni kiriting yoki tanlang!");
+      setErrorModal({ open: true, message: "Iltimos, mavzuni kiriting yoki tanlang!" });
       return;
     }
 
     try {
-      // 1. Darsni saqlash va ID olish
-      const lessonRes = await axiosClient.post('/lessons', {
+      const payload = {
         group_id: Number(id),
         topic: mavzu,
+        lesson_date: date,
         description: tavsif,
-      });
+        attendances: students.reduce((acc, student, sIdx) => {
+          if (attendance[sIdx]) {
+            const sid = student.student_id || student.student?.id || student.id;
+            acc.push({
+              student_id: Number(sid),
+              isPresent: true
+            });
+          }
+          return acc;
+        }, [])
+      };
 
-      const lessonId = lessonRes.data?.data?.id || lessonRes.data?.id;
+      await axiosClient.post(`/groups/${id}/lesson`, payload);
 
-      // 2. Har bir o'quvchi uchun attendance
-      await Promise.all(
-        students.map(student => {
-          const sid = student.student_id || student.id;
-          return axiosClient.post('/attendance', {
-            group_id: Number(id),
-            lesson_id: lessonId,
-            student_id: Number(sid),
-            isPresent: Boolean(attendance[sid])
-          });
-        })
-      );
-
-      alert("Saqlandi!");
+      setSuccessSnackbar(true);
     } catch (err) {
       console.error(err);
-      alert("Xatolik!");
+      setErrorModal({ open: true, message: err.response?.data?.message || "Xatolik yuz berdi!" });
     }
   };
 
@@ -131,7 +152,6 @@ function LessonDetail() {
   const teachers = lesson?.lesson?.teachers || lesson?.teachers || [];
   const currentTeacher = teachers[activeTab] || teachers[0] || {};
   const students = lesson?.attendance || [];
-  const today = new Date();
 
   const activeMonthKey = days.length > 0 ? (lesson?.month_key || 1) : 1; // Assuming month_key or fallback
 
@@ -155,19 +175,32 @@ function LessonDetail() {
           {days.map((dayObj, idx) => {
             const iso = toIso(dayObj);
             const isSelected = iso === date;
-            const mIdx = monthsList.indexOf((dayObj.month || '').substring(0, 3).toLowerCase());
-            const isPast = mIdx !== -1 && (mIdx < today.getMonth() || (mIdx === today.getMonth() && dayObj.day < today.getDate()));
+
+            const targetDateObj = parseIsoToDate(iso);
+
+            const isFuture = targetDateObj > today;
+            const isPast = targetDateObj < today;
+
             return (
               <Box
                 key={idx}
-                onClick={() => navigate(`/dashboard/groups/${id}/lesson/${iso}`)}
+                onClick={(e) => {
+                  if (isFuture) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                  }
+                  navigate(`/dashboard/groups/${id}/lesson/${iso}`);
+                }}
                 sx={{
                   minWidth: '46px', height: '54px',
                   bgcolor: isSelected ? '#10b981' : (isPast ? '#f1f5f9' : '#fff'),
                   border: isSelected || isPast ? 'none' : '1px solid #e5e7eb',
                   borderRadius: '8px', display: 'flex', flexDirection: 'column',
-                  alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-                  '&:hover': { opacity: 0.8 },
+                  alignItems: 'center', justifyContent: 'center',
+                  cursor: isFuture ? 'not-allowed' : 'pointer',
+                  opacity: isFuture ? 0.5 : 1,
+                  '&:hover': { opacity: isFuture ? 0.5 : 0.8 },
                 }}
               >
                 <Typography sx={{ fontSize: '11px', fontWeight: 500, color: isSelected ? '#fff' : (isPast ? '#94a3b8' : '#94a3b8') }}>
@@ -229,7 +262,7 @@ function LessonDetail() {
         <Box sx={{ px: 3, py: 2, borderBottom: '1px solid #f3f4f6' }}>
           <Typography sx={{ fontWeight: 700, fontSize: '15px', color: '#111827' }}>Yo'qlama va mavzu kiritish</Typography>
         </Box>
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ p: 3, pointerEvents: isReadOnly ? 'none' : 'auto', opacity: isReadOnly ? 0.6 : 1 }}>
           <RadioGroup row value={mavzuType} onChange={(e) => { setMavzuType(e.target.value); setMavzu(''); }} sx={{ mb: 3 }}>
             <FormControlLabel
               value="reja"
@@ -290,17 +323,16 @@ function LessonDetail() {
               <Box key={student.student_id || student.id || sIdx} sx={{ display: 'grid', gridTemplateColumns: '60px 1fr 100px', alignItems: 'center', borderBottom: '1px solid #f8fafc', py: 1.5, px: 2 }}>
                 <Typography sx={{ fontSize: '14px', color: '#111827', fontWeight: 500 }}>{sIdx + 1}</Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                  <Avatar src={student.photo ? `https://najot-edu.softwareengineer.uz/uploads/${student.photo}` : ''} sx={{ width: 32, height: 32, bgcolor: '#cbd5e1', color: '#fff', fontSize: '13px' }}>
-                    {!student.photo && (student.full_name || 'S').charAt(0).toUpperCase()}
+                  <Avatar src={student.photo || student.avatar || student.image ? `https://najot-edu.softwareengineer.uz/files/${student.photo || student.avatar || student.image}` : ''} sx={{ width: 32, height: 32, bgcolor: '#cbd5e1', color: '#fff', fontSize: '13px' }}>
+                    {!(student.photo || student.avatar || student.image) && (student.full_name || 'S').charAt(0).toUpperCase()}
                   </Avatar>
                   <Typography sx={{ fontSize: '14px', color: '#111827' }}>{student.full_name}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                   <Switch
-                    checked={!!attendance[student.student_id || student.id]}
+                    checked={!!attendance[sIdx]}
                     onChange={(e) => {
-                      const sid = student.student_id || student.id;
-                      if (sid) setAttendance(prev => ({ ...prev, [sid]: e.target.checked }));
+                      setAttendance(prev => ({ ...prev, [sIdx]: e.target.checked }));
                     }}
                     sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: '#10b981' }, '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { bgcolor: '#10b981' } }}
                   />
@@ -314,14 +346,35 @@ function LessonDetail() {
           </Box>
 
           {/* Fixed Save button */}
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Button onClick={handleSave} variant="contained"
-              sx={{ bgcolor: '#7C3AED', color: '#fff', borderRadius: '8px', textTransform: 'none', fontWeight: 600, px: 4, py: 1, boxShadow: 'none', '&:hover': { bgcolor: '#6d28d9', boxShadow: 'none' } }}>
-              Saqlash
-            </Button>
-          </Box>
+          {!isReadOnly && (
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button onClick={handleSave} variant="contained"
+                sx={{ bgcolor: '#7C3AED', color: '#fff', borderRadius: '8px', textTransform: 'none', fontWeight: 600, px: 4, py: 1, boxShadow: 'none', '&:hover': { bgcolor: '#6d28d9', boxShadow: 'none' } }}>
+                Saqlash
+              </Button>
+            </Box>
+          )}
         </Box>
       </Paper>
+
+      {/* Success Snackbar */}
+      <Snackbar 
+        open={successSnackbar} 
+        autoHideDuration={3000} 
+        onClose={() => setSuccessSnackbar(false)}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert severity="success" onClose={() => setSuccessSnackbar(false)} sx={{ width: '100%' }}>
+          Muvaffaqiyatli saqlandi!
+        </Alert>
+      </Snackbar>
+
+      {/* Error Modal */}
+      <ErrorModal
+        open={errorModal.open}
+        onClose={() => setErrorModal({ open: false, message: '' })}
+        message={errorModal.message}
+      />
     </Box>
   );
 }

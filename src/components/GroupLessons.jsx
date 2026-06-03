@@ -256,7 +256,15 @@ function GroupLessons() {
                     </TableRow>
                   ) : lessons.length > 0 ? (
                     lessons.map((lesson, index) => (
-                      <TableRow key={lesson.id || index} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                      <TableRow 
+                        key={lesson.id || index} 
+                        onClick={() => navigate(`/dashboard/groups/${id}/homework/${lesson.id}`)}
+                        sx={{ 
+                          '&:last-child td, &:last-child th': { border: 0 },
+                          cursor: 'pointer',
+                          '&:hover': { bgcolor: '#f8fafc' }
+                        }}
+                      >
                         <TableCell sx={{ color: '#1e293b', fontWeight: 600, fontSize: '14px', py: 2.5, borderBottom: '1px solid #f1f5f9' }}>{index + 1}</TableCell>
                         <TableCell sx={{ color: '#1e293b', fontWeight: 600, fontSize: '14px', py: 2.5, borderBottom: '1px solid #f1f5f9' }}>{lesson.topic || '—'}</TableCell>
                         <TableCell align="center" sx={{ color: '#1e293b', fontWeight: 600, fontSize: '14px', py: 2.5, borderBottom: '1px solid #f1f5f9' }}>{lesson.existStudentsIngroup || 0}</TableCell>

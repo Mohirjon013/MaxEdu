@@ -17,6 +17,15 @@ const formatDate = (dateString) => {
   return `${day} ${month}, ${year}`;
 };
 
+const parseIsoToDate = (isoString) => {
+  if (!isoString) return new Date();
+  const parts = isoString.split('-');
+  if (parts.length !== 3) return new Date();
+  const dt = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+  dt.setHours(0, 0, 0, 0);
+  return dt;
+};
+
 function SingleGroups() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -119,8 +128,8 @@ function SingleGroups() {
                 <Box sx={{ p: 3, display: 'flex', gap: 3 }}>
                   {group.teachers?.map((teacher, idx) => (
                     <Box key={idx} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      <Avatar src={teacher.image || ''} sx={{ width: 64, height: 64, mb: 1, border: '2px solid #e5e7eb' }}>
-                        {!teacher.image && teacher.full_name?.charAt(0)}
+                      <Avatar src={teacher.photo || teacher.avatar || teacher.image ? `https://najot-edu.softwareengineer.uz/files/${teacher.photo || teacher.avatar || teacher.image}` : ''} sx={{ width: 64, height: 64, mb: 1, border: '2px solid #e5e7eb' }}>
+                        {!(teacher.photo || teacher.avatar || teacher.image) && teacher.full_name?.charAt(0)}
                       </Avatar>
                       <Typography sx={{ fontSize: '12px', color: '#10b981', fontWeight: 600, mb: 0.5 }}>Teacher</Typography>
                       <Typography sx={{ fontSize: '14px', fontWeight: 700, color: '#111827' }}>{teacher.full_name}</Typography>
@@ -228,21 +237,46 @@ function SingleGroups() {
                         </Box>
                         <Box sx={{ display: 'flex', gap: 1, overflowX: 'auto', pb: 1 }}>
                           {monthData?.days?.map((dayObj, dIdx) => {
-                            const today = new Date();
-                            const todayMonth = today.getMonth();
-                            const todayDate = today.getDate();
-                            const monthsList = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-                            const mIndex = monthsList.indexOf((dayObj.month || '').substring(0, 3).toLowerCase());
-                            const isPast = mIndex !== -1 && (mIndex < todayMonth || (mIndex === todayMonth && dayObj.day < todayDate));
-
                             const monthNums = {'jan':'01','feb':'02','mar':'03','apr':'04','may':'05','jun':'06','jul':'07','aug':'08','sep':'09','oct':'10','nov':'11','dec':'12'};
                             const mKey = (dayObj.month || '').substring(0, 3).toLowerCase();
                             const isoDate = `${new Date().getFullYear()}-${monthNums[mKey] || '01'}-${String(dayObj.day).padStart(2, '0')}`;
+                            
+                            const targetDateObj = parseIsoToDate(isoDate);
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            
+                            const isFuture = targetDateObj > today;
+                            const isPast = targetDateObj < today;
+                            const isToday = targetDateObj.getTime() === today.getTime();
 
                             return (
-                              <Box key={dIdx} onClick={() => navigate(`/dashboard/groups/${id}/lesson/${isoDate}`)} sx={{ minWidth: '40px', height: '48px', bgcolor: isPast ? '#e2e8f0' : '#fff', border: isPast ? 'none' : '1px solid #e2e8f0', borderRadius: '6px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', '&:hover': { opacity: 0.8 } }}>
-                                <Typography sx={{ fontSize: '10px', color: isPast ? '#64748b' : '#94a3b8' }}>{dayObj.month.slice(0, 3)}</Typography>
-                                <Typography sx={{ fontSize: '13px', fontWeight: 600, color: isPast ? '#334155' : '#64748b' }}>{dayObj.day}</Typography>
+                              <Box 
+                                key={dIdx} 
+                                onClick={(e) => {
+                                  if (isFuture) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    return;
+                                  }
+                                  navigate(`/dashboard/groups/${id}/lesson/${isoDate}`);
+                                }} 
+                                sx={{ 
+                                  minWidth: '40px', 
+                                  height: '48px', 
+                                  bgcolor: isToday ? '#dbeafe' : (isPast ? '#e2e8f0' : '#fff'), 
+                                  border: isToday ? '2px solid #3b82f6' : (isPast ? 'none' : '1px solid #e2e8f0'), 
+                                  borderRadius: '6px', 
+                                  display: 'flex', 
+                                  flexDirection: 'column', 
+                                  alignItems: 'center', 
+                                  justifyContent: 'center', 
+                                  cursor: isFuture ? 'not-allowed' : 'pointer', 
+                                  opacity: isFuture ? 0.5 : 1,
+                                  '&:hover': { opacity: isFuture ? 0.5 : 0.8 } 
+                                }}
+                              >
+                                <Typography sx={{ fontSize: '10px', color: isToday ? '#1d4ed8' : (isPast ? '#64748b' : '#94a3b8') }}>{dayObj.month.slice(0, 3)}</Typography>
+                                <Typography sx={{ fontSize: '13px', fontWeight: 600, color: isToday ? '#1d4ed8' : (isPast ? '#334155' : '#64748b') }}>{dayObj.day}</Typography>
                               </Box>
                             );
                           })}
@@ -266,21 +300,46 @@ function SingleGroups() {
                         </Box>
                         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                           {monthData?.days?.map((dayObj, dIdx) => {
-                            const today = new Date();
-                            const todayMonth = today.getMonth();
-                            const todayDate = today.getDate();
-                            const monthsList = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-                            const mIndex = monthsList.indexOf((dayObj.month || '').substring(0, 3).toLowerCase());
-                            const isPast = mIndex !== -1 && (mIndex < todayMonth || (mIndex === todayMonth && dayObj.day < todayDate));
-
                             const monthNums = {'jan':'01','feb':'02','mar':'03','apr':'04','may':'05','jun':'06','jul':'07','aug':'08','sep':'09','oct':'10','nov':'11','dec':'12'};
                             const mKey = (dayObj.month || '').substring(0, 3).toLowerCase();
                             const isoDate = `${new Date().getFullYear()}-${monthNums[mKey] || '01'}-${String(dayObj.day).padStart(2, '0')}`;
+                            
+                            const targetDateObj = parseIsoToDate(isoDate);
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            
+                            const isFuture = targetDateObj > today;
+                            const isPast = targetDateObj < today;
+                            const isToday = targetDateObj.getTime() === today.getTime();
 
                             return (
-                              <Box key={dIdx} onClick={() => navigate(`/dashboard/groups/${id}/lesson/${isoDate}`)} sx={{ width: '36px', height: '44px', bgcolor: isPast ? '#e2e8f0' : '#fff', border: isPast ? 'none' : '1px solid #e2e8f0', borderRadius: '6px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', '&:hover': { opacity: 0.8 } }}>
-                                <Typography sx={{ fontSize: '10px', color: isPast ? '#64748b' : '#94a3b8' }}>{dayObj.month.slice(0, 3)}</Typography>
-                                <Typography sx={{ fontSize: '13px', fontWeight: 600, color: isPast ? '#334155' : '#64748b' }}>{dayObj.day}</Typography>
+                              <Box 
+                                key={dIdx} 
+                                onClick={(e) => {
+                                  if (isFuture) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    return;
+                                  }
+                                  navigate(`/dashboard/groups/${id}/lesson/${isoDate}`);
+                                }} 
+                                sx={{ 
+                                  width: '36px', 
+                                  height: '44px', 
+                                  bgcolor: isToday ? '#dbeafe' : (isPast ? '#e2e8f0' : '#fff'), 
+                                  border: isToday ? '2px solid #3b82f6' : (isPast ? 'none' : '1px solid #e2e8f0'), 
+                                  borderRadius: '6px', 
+                                  display: 'flex', 
+                                  flexDirection: 'column', 
+                                  alignItems: 'center', 
+                                  justifyContent: 'center', 
+                                  cursor: isFuture ? 'not-allowed' : 'pointer', 
+                                  opacity: isFuture ? 0.5 : 1,
+                                  '&:hover': { opacity: isFuture ? 0.5 : 0.8 } 
+                                }}
+                              >
+                                <Typography sx={{ fontSize: '10px', color: isToday ? '#1d4ed8' : (isPast ? '#64748b' : '#94a3b8') }}>{dayObj.month.slice(0, 3)}</Typography>
+                                <Typography sx={{ fontSize: '13px', fontWeight: 600, color: isToday ? '#1d4ed8' : (isPast ? '#334155' : '#64748b') }}>{dayObj.day}</Typography>
                               </Box>
                             );
                           })}
