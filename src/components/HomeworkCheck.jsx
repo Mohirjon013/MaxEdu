@@ -39,7 +39,7 @@ function HomeworkCheck() {
         const hwResponse = await axiosClient.get(`/homework/${id}`);
         const hwData = hwResponse.data?.data || hwResponse.data || [];
         const hwList = Array.isArray(hwData) ? hwData : [];
-        const currentHw = hwList.find(h => String(h.id) === String(hwId));
+        const currentHw = hwList.find(h => String(h.id) === String(hwId) || (h.homework && h.homework.some(hw => String(hw.id) === String(hwId))));
         setHomework(currentHw);
 
       } catch (err) {
@@ -124,16 +124,6 @@ function HomeworkCheck() {
         </Typography>
       </Box>
 
-      {/* Homework Info Box */}
-      <Paper sx={{ p: 3, mb: 3, borderRadius: '12px', border: '1px solid #e5e7eb', boxShadow: 'none' }}>
-        <Typography sx={{ fontWeight: 700, fontSize: '18px', color: '#111827', mb: 2 }}>Uy vazifasi</Typography>
-        <Box sx={{ bgcolor: '#f8fafc', p: 2.5, borderRadius: '8px' }}>
-          <Typography sx={{ color: '#64748b', fontSize: '14px', mb: 1, fontWeight: 500 }}>Izoh:</Typography>
-          <Typography sx={{ color: '#1e293b', fontSize: '15px' }}>
-            {homework?.description || homework?.topic || "Noma'lum vazifa izohi"}
-          </Typography>
-        </Box>
-      </Paper>
 
       {/* Student Submission Box */}
       <Paper sx={{ p: 3, mb: 3, borderRadius: '12px', border: '1px solid #e5e7eb', boxShadow: 'none', bgcolor: '#f8fafc' }}>

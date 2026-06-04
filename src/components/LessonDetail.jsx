@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Avatar, Tabs, Tab, Switch, Button,
-  Radio, RadioGroup, FormControlLabel, TextField, IconButton, Paper, Select, MenuItem, Snackbar, Alert
+  Radio, RadioGroup, FormControlLabel, TextField, IconButton, Paper, Select, MenuItem, Snackbar, Alert, CircularProgress
 } from '@mui/material';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import axiosClient from '../api/axios';
@@ -44,6 +44,7 @@ function LessonDetail() {
   const [attendance, setAttendance] = useState({});
   const [errorModal, setErrorModal] = useState({ open: false, message: '' });
   const [successSnackbar, setSuccessSnackbar] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // const today = new Date();
   // today.setHours(0, 0, 0, 0);
@@ -75,7 +76,6 @@ function LessonDetail() {
           axiosClient.get(`/lessons/my/group/${id}`).catch(() => ({ data: { data: [] } })),
           axiosClient.get(`/groups/${id}`).catch(() => ({ data: { data: {} } })),
         ]);
-        console.log(lessonRes, schedRes, topicsRes, groupRes);
 
         const gData = groupRes.data?.data || groupRes.data || {};
         setGroupData(gData);
@@ -92,11 +92,23 @@ function LessonDetail() {
             att[idx] = s.isPresent || false;
           });
           setAttendance(att);
+        } else {
+          setAttendance({});
         }
 
         const actualLesson = lessonData?.lesson || {};
-        if (actualLesson?.topic) setMavzu(actualLesson.topic);
-        if (actualLesson?.description) setTavsif(actualLesson.description);
+        setMavzu(actualLesson.topic || '');
+        setTavsif(actualLesson.description || '');
+        
+        if (actualLesson.topic) {
+          const isReja = (Array.isArray(topicsData) ? topicsData : []).some(t => {
+            const tName = t.title || t.topic || t.name;
+            return tName === actualLesson.topic;
+          });
+          setMavzuType(isReja ? 'reja' : 'boshqa');
+        } else {
+          setMavzuType('boshqa');
+        }
 
         // Parse schedules → find active month days
         let data = schedRes.data?.data || schedRes.data || [];
@@ -125,6 +137,7 @@ function LessonDetail() {
       return;
     }
 
+    setIsSaving(true);
     try {
       const payload = {
         group_id: Number(id),
@@ -149,6 +162,8 @@ function LessonDetail() {
     } catch (err) {
       console.error(err);
       setErrorModal({ open: true, message: err.response?.data?.message || "Xatolik yuz berdi!" });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -163,12 +178,22 @@ function LessonDetail() {
   return (
     <Box sx={{ fontFamily: 'Roboto, sans-serif', pb: 4 }}>
       {/* Back Button */}
-      <Box
-        sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, cursor: 'pointer', '&:hover': { opacity: 0.8 }, width: 'max-content' }}
-        onClick={() => navigate(`/dashboard/groups/${id}`)}
-      >
-        <ArrowBackIosNewIcon sx={{ fontSize: '14px', color: '#111827' }} />
-        <Typography sx={{ fontWeight: 700, fontSize: '20px', color: '#111827' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+        <IconButton
+          onClick={() => navigate(`/dashboard/groups/${id}`)}
+          sx={{
+            bgcolor: '#f8fafc',
+            border: '1px solid #e2e8f0',
+            color: '#334155',
+            '&:hover': { bgcolor: '#f1f5f9' },
+            width: 38,
+            height: 38,
+            borderRadius: '10px'
+          }}
+        >
+          <ArrowBackIosNewIcon sx={{ fontSize: '16px', ml: '2px' }} />
+        </IconButton>
+        <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#111827' }}>
           Guruhga qaytish
         </Typography>
       </Box>
@@ -364,9 +389,9 @@ function LessonDetail() {
           {/* Fixed Save button */}
           {!isReadOnly && (
             <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <Button onClick={handleSave} variant="contained"
-                sx={{ bgcolor: '#7C3AED', color: '#fff', borderRadius: '8px', textTransform: 'none', fontWeight: 600, px: 4, py: 1, boxShadow: 'none', '&:hover': { bgcolor: '#6d28d9', boxShadow: 'none' } }}>
-                Saqlash
+              <Button onClick={handleSave} variant="contained" disabled={isSaving}
+                sx={{ bgcolor: '#7C3AED', color: '#fff', borderRadius: '8px', textTransform: 'none', fontWeight: 600, px: 4, py: 1, boxShadow: 'none', '&:hover': { bgcolor: '#6d28d9', boxShadow: 'none' }, '&.Mui-disabled': { bgcolor: '#c4b5fd', color: '#fff' } }}>
+                {isSaving ? <CircularProgress size={20} color="inherit" /> : 'Saqlash'}
               </Button>
             </Box>
           )}
@@ -374,9 +399,9 @@ function LessonDetail() {
       </Paper>
 
       {/* Success Snackbar */}
-      <Snackbar 
-        open={successSnackbar} 
-        autoHideDuration={3000} 
+      <Snackbar
+        open={successSnackbar}
+        autoHideDuration={3000}
         onClose={() => setSuccessSnackbar(false)}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >

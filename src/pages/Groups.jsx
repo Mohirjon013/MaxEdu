@@ -19,15 +19,13 @@ import {
   Drawer,
   Dialog,
   TextField,
-  ThemeProvider,
-  createTheme,
+  ListItemText,
+  CircularProgress,
+  Select,
   MenuItem,
   Checkbox,
-  Select,
   Menu,
-  ListItemIcon,
-  ListItemText,
-  CircularProgress
+  ListItemIcon
 } from '@mui/material';
 import GroupsIcon from '@mui/icons-material/Groups';
 import SchoolIcon from '@mui/icons-material/School';
@@ -42,47 +40,7 @@ import loading from "../assets/images/loading.gif";
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
 import ErrorModal from '../components/ErrorModal';
 
-const theme = createTheme({
-  palette: {
-    primary: { main: '#7C3AED' },
-  },
-  components: {
-    MuiTextField: {
-      defaultProps: { variant: 'outlined', size: 'small' },
-    },
-    MuiOutlinedInput: {
-      styleOverrides: {
-        root: {
-          borderRadius: '8px',
-          '&:hover .MuiOutlinedInput-notchedOutline': {
-            borderColor: '#7C3AED',
-          },
-          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-            borderColor: '#7C3AED',
-            borderWidth: '1px',
-          },
-        },
-        notchedOutline: {
-          borderColor: '#d1d5db',
-          transition: 'border-color 0.3s ease-in-out, border-width 0.3s ease-in-out',
-        },
-      },
-    },
-    MuiButton: {
-      styleOverrides: {
-        root: { textTransform: 'none', borderRadius: '8px' },
-      },
-    },
-    MuiSwitch: {
-      styleOverrides: {
-        switchBase: {
-          '&.Mui-checked': { color: '#7C3AED' },
-          '&.Mui-checked + .MuiSwitch-track': { backgroundColor: '#7C3AED' },
-        },
-      },
-    },
-  },
-});
+// Removed local theme to use global ThemeContextProvider
 
 const inputSx = {
   '& .MuiOutlinedInput-root': {
@@ -358,7 +316,6 @@ function Groups() {
   };
 
   async function createGroups() {
-    console.log('Yuborilayotgan data:', createGroup)
     try {
       // API ga yuborishdan oldin payloadni tozalash
       // null, NaN, bo'sh string qiymatlarni olib tashlash
@@ -424,12 +381,12 @@ function Groups() {
 
 
   return (
-    <ThemeProvider theme={theme}>
+    <>
       <Box sx={{ mt: 3, fontFamily: 'Roboto, sans-serif' }}>
 
         {/* Header */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h5" sx={{ fontWeight: 700, color: '#111827', fontSize: '30px' }}>
+          <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary', fontSize: '30px' }}>
             Guruhlar
           </Typography>
           <Button
@@ -455,12 +412,12 @@ function Groups() {
             sx={{
               fontWeight: 600, px: 2.5, py: 0.8, fontSize: '14.5px',
               borderRadius: '8px', textTransform: 'none',
-              bgcolor: activeTab === 'guruhlar' ? '#fff' : 'transparent',
-              color: activeTab === 'guruhlar' ? '#111827' : '#6b7280',
+              bgcolor: activeTab === 'guruhlar' ? 'background.paper' : 'transparent',
+              color: activeTab === 'guruhlar' ? 'text.primary' : 'text.secondary',
               boxShadow: activeTab === 'guruhlar' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
               border: 'none',
               '&:hover': {
-                bgcolor: activeTab === 'guruhlar' ? '#fff' : '#f3f4f6',
+                bgcolor: activeTab === 'guruhlar' ? 'background.paper' : 'action.hover',
               }
             }}
           >
@@ -473,12 +430,12 @@ function Groups() {
             sx={{
               fontWeight: 600, px: 2.5, py: 0.8, fontSize: '14.5px',
               borderRadius: '8px', textTransform: 'none',
-              bgcolor: activeTab === 'arxiv' ? '#fff' : 'transparent',
-              color: activeTab === 'arxiv' ? '#111827' : '#6b7280',
+              bgcolor: activeTab === 'arxiv' ? 'background.paper' : 'transparent',
+              color: activeTab === 'arxiv' ? 'text.primary' : 'text.secondary',
               boxShadow: activeTab === 'arxiv' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
               border: 'none',
               '&:hover': {
-                bgcolor: activeTab === 'arxiv' ? '#fff' : '#f3f4f6',
+                bgcolor: activeTab === 'arxiv' ? 'background.paper' : 'action.hover',
               }
             }}
           >
@@ -584,8 +541,8 @@ function Groups() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    groups.map((group) => (
-                      <TableRow key={group.id} hover onClick={() => navigate(`/dashboard/groups/${group.id}`)} sx={{ cursor: 'pointer', '& td': { borderBottom: '1px solid #eee' } }}>
+                    groups.map((group, index) => (
+                      <TableRow key={group.id ? `group-${group.id}-${index}` : index} hover onClick={() => navigate(`/dashboard/groups/${group.id}`)} sx={{ cursor: 'pointer', '& td': { borderBottom: '1px solid #eee' } }}>
                         {/* Status */}
                         <TableCell align="center">
                           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5 }}>
@@ -993,7 +950,7 @@ function Groups() {
           open={isTeacherModalOpen}
           onClose={() => setIsTeacherModalOpen(false)}
           sx={{ zIndex: 99999 }}
-          PaperProps={{ sx: { borderRadius: '12px', overflow: 'hidden', m: 2 } }}
+          slotProps={{ paper: { sx: { borderRadius: '12px', overflow: 'hidden', m: 2 } } }}
         >
           <Box sx={{ p: 2, width: '500px', overflowX: 'hidden' }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.5 }}>
@@ -1069,7 +1026,7 @@ function Groups() {
           open={isStudentModalOpen}
           onClose={() => setIsStudentModalOpen(false)}
           sx={{ zIndex: 99999 }}
-          PaperProps={{ sx: { borderRadius: '12px', overflow: 'hidden', m: 2 } }}
+          slotProps={{ paper: { sx: { borderRadius: '12px', overflow: 'hidden', m: 2 } } }}
         >
           <Box sx={{ p: 2, width: '500px', overflowX: 'hidden' }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.5 }}>
@@ -1165,7 +1122,7 @@ function Groups() {
           open={Boolean(anchorEl)}
           onClose={handleCloseMenu}
           onClick={(e) => e.stopPropagation()}
-          PaperProps={{
+          slotProps={{ paper: {
             elevation: 0,
             sx: {
               overflow: 'visible',
@@ -1181,7 +1138,7 @@ function Groups() {
                 '&:hover': { bgcolor: '#f3f4f6' }
               }
             },
-          }}
+          }}}
           transformOrigin={{ horizontal: 'right', vertical: 'top' }}
           anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         >
@@ -1199,7 +1156,7 @@ function Groups() {
           </MenuItem>
         </Menu>
       </Box>
-    </ThemeProvider>
+    </>
   );
 }
 

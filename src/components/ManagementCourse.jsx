@@ -71,14 +71,14 @@ const ManagementCourse = () => {
   useEffect(() => {
     async function getCourse() {
       setIsLoading(true);
-      try{
+      try {
         const res = await axiosClient.get(isArchiveView ? '/courses/archive' : '/courses')
-        if(res.status === 200){
+        if (res.status === 200) {
           const data = res.data?.data ?? res.data ?? [];
           setCourse(Array.isArray(data) ? data : []);
         }
       }
-      catch(error){
+      catch (error) {
         console.log(error.message);
         setErrorModal({ open: true, message: `Ma'lumotlarini yuklashda xatolik: ${error.message}` });
       } finally {
@@ -86,7 +86,7 @@ const ManagementCourse = () => {
       }
     }
     getCourse()
-  },[isArchiveView])
+  }, [isArchiveView])
 
   async function handleCreateCourse() {
     setIsSaving(true);
@@ -155,11 +155,10 @@ const ManagementCourse = () => {
     }
   };
 
-  function getInputInfo(e){
-    setCourseInfo(prev => ({...prev, [e.target.name]: e.target.value}))
+  function getInputInfo(e) {
+    setCourseInfo(prev => ({ ...prev, [e.target.name]: e.target.value }))
   }
-  console.log(course);
-  
+
 
   return (
     <ThemeProvider theme={theme}>
@@ -208,7 +207,7 @@ const ManagementCourse = () => {
         </Box>
 
         {/* Main Card */}
-        <Paper sx={{ height: '480px', bgcolor: '#fff', borderRadius: '12px', p: 3, border: '1px solid #f3f4f6', boxShadow: '0 2px 10px rgba(0,0,0,0.04)' , overflow: 'hidden' }}>
+        <Paper sx={{ height: '480px', bgcolor: '#fff', borderRadius: '12px', p: 3, border: '1px solid #f3f4f6', boxShadow: '0 2px 10px rgba(0,0,0,0.04)', overflow: 'hidden' }}>
           {/* Card Header */}
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography sx={{ fontSize: '26px', fontWeight: 700, color: '#111827' }}>
@@ -246,60 +245,61 @@ const ManagementCourse = () => {
           </Box>
 
           {/* Grid */}
-          {isLoading ? 
+          {isLoading ?
 
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '395px' }}>
-            <img src={loading} alt="loading" width={90} height={90} />
-          </Box>
-          
-          :
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 2 , maxHeight: '395px',  overflowY:'auto', pr:1,
-            '&::-webkit-scrollbar': { width: '4px' },
-            '&::-webkit-scrollbar-track': { background: 'transparent' },
-            '&::-webkit-scrollbar-thumb': { background: '#e5e7eb', borderRadius: '10px' },
-            '&::-webkit-scrollbar-thumb:hover': { background: '#d1d5db' },
-          }}>
-            {course.map((course, index) => (
-              <Box
-                key={index}
-                sx={{ bgcolor: "#F0F5FA" , borderRadius: '16px', p: 2.5, display: 'flex', flexDirection: 'column', gap: 2 }}
-              >
-                {/* Title */}
-                <Typography sx={{ fontSize: '16px', fontWeight: 700, color: '#111827' }}>
-                  {course.name ? course.name : 'No name'}
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '395px' }}>
+              <img src={loading} alt="loading" width={90} height={90} />
+            </Box>
 
-                </Typography>
+            :
+            <Box sx={{
+              display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 2, maxHeight: '395px', overflowY: 'auto', pr: 1,
+              '&::-webkit-scrollbar': { width: '4px' },
+              '&::-webkit-scrollbar-track': { background: 'transparent' },
+              '&::-webkit-scrollbar-thumb': { background: '#e5e7eb', borderRadius: '10px' },
+              '&::-webkit-scrollbar-thumb:hover': { background: '#d1d5db' },
+            }}>
+              {course.map((course, index) => (
+                <Box
+                  key={index}
+                  sx={{ bgcolor: "#F0F5FA", borderRadius: '16px', p: 2.5, display: 'flex', flexDirection: 'column', gap: 2 }}
+                >
+                  {/* Title */}
+                  <Typography sx={{ fontSize: '16px', fontWeight: 700, color: '#111827' }}>
+                    {course.name ? course.name : 'No name'}
 
-                {/* Description & Actions */}
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography sx={{ fontSize: '14px', color: '#6B7280' }}>
-                    {course.description ? course.description : 'No description'}
                   </Typography>
-                  <Box sx={{ display: 'flex', gap: 0.5 }}>
-                    <IconButton size="small" onClick={() => { setCourseToDelete(course); setDeleteModalOpen(true); }} sx={{ color: '#6B7280', transition: 'color 0.2s', '&:hover': { color: '#ef4444' } }}>
-                      <DeleteOutlined fontSize="small" />
-                    </IconButton>
-                    <IconButton size="small" onClick={() => handleEditClick(course.id)} sx={{ color: '#6B7280', transition: 'color 0.2s', '&:hover': { color: '#7C3AED' } }}>
-                      <EditOutlined fontSize="small" />
-                    </IconButton>
-                  </Box>
-                </Box>
 
-                {/* Badges */}
-                <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', mt: 0.5 }}>
-                  <Box sx={{ bgcolor: '#fff', px: 1.5, py: 0.75, borderRadius: '6px', fontSize: '13px', fontWeight: 700, color: '#374151', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-                    {course.duration_hours} min
+                  {/* Description & Actions */}
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Typography sx={{ fontSize: '14px', color: '#6B7280' }}>
+                      {course.description ? course.description : 'No description'}
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 0.5 }}>
+                      <IconButton size="small" onClick={() => { setCourseToDelete(course); setDeleteModalOpen(true); }} sx={{ color: '#6B7280', transition: 'color 0.2s', '&:hover': { color: '#ef4444' } }}>
+                        <DeleteOutlined fontSize="small" />
+                      </IconButton>
+                      <IconButton size="small" onClick={() => handleEditClick(course.id)} sx={{ color: '#6B7280', transition: 'color 0.2s', '&:hover': { color: '#7C3AED' } }}>
+                        <EditOutlined fontSize="small" />
+                      </IconButton>
+                    </Box>
                   </Box>
-                  <Box sx={{ bgcolor: '#fff', px: 1.5, py: 0.75, borderRadius: '6px', fontSize: '13px', fontWeight: 700, color: '#374151', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-                    {course.duration_month} oy
-                  </Box>
-                  <Box sx={{ bgcolor: '#fff', px: 1.5, py: 0.75, borderRadius: '6px', fontSize: '13px', fontWeight: 700, color: '#374151', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-                    {course.price}
+
+                  {/* Badges */}
+                  <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', mt: 0.5 }}>
+                    <Box sx={{ bgcolor: '#fff', px: 1.5, py: 0.75, borderRadius: '6px', fontSize: '13px', fontWeight: 700, color: '#374151', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                      {course.duration_hours} min
+                    </Box>
+                    <Box sx={{ bgcolor: '#fff', px: 1.5, py: 0.75, borderRadius: '6px', fontSize: '13px', fontWeight: 700, color: '#374151', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                      {course.duration_month} oy
+                    </Box>
+                    <Box sx={{ bgcolor: '#fff', px: 1.5, py: 0.75, borderRadius: '6px', fontSize: '13px', fontWeight: 700, color: '#374151', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                      {course.price}
+                    </Box>
                   </Box>
                 </Box>
-              </Box>
-            ))}
-          </Box> }
+              ))}
+            </Box>}
         </Paper>
 
 
@@ -453,10 +453,10 @@ const ManagementCourse = () => {
         />
 
         {/* Error Modal */}
-        <ErrorModal 
-          open={errorModal.open} 
-          onClose={() => setErrorModal({ ...errorModal, open: false })} 
-          message={errorModal.message} 
+        <ErrorModal
+          open={errorModal.open}
+          onClose={() => setErrorModal({ ...errorModal, open: false })}
+          message={errorModal.message}
         />
       </Box>
     </ThemeProvider>

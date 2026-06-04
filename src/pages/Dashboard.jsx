@@ -36,28 +36,29 @@ function CustomAccordion({ title }) {
       disableGutters
       elevation={0}
       sx={{
-        backgroundColor: "#FFFFFF",
+        backgroundColor: "background.paper",
         borderRadius: "16px !important",
         mb: 2,
-        border: "1px solid #E5E7EB",
+        border: "1px solid",
+        borderColor: "divider",
         boxShadow: "0px 2px 4px rgba(0,0,0,0.02)",
         "&:before": { display: "none" },
       }}
     >
       <AccordionSummary
-        expandIcon={<ExpandMore sx={{ color: "#6B7280" }} />}
+        expandIcon={<ExpandMore sx={{ color: "text.secondary" }} />}
         sx={{
           minHeight: 64,
           px: 3,
           "& .MuiAccordionSummary-content": { margin: 0 },
         }}
       >
-        <Typography sx={{ fontSize: 16, fontWeight: 700, color: "#111827" }}>
+        <Typography sx={{ fontSize: 16, fontWeight: 700, color: "text.primary" }}>
           {title}
         </Typography>
       </AccordionSummary>
       <AccordionDetails sx={{ px: 3, pb: 3, pt: 0 }}>
-        <Typography sx={{ color: "#6B7280", fontSize: 14 }}>
+        <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
           Ma'lumot mavjud emas.
         </Typography>
       </AccordionDetails>
@@ -70,10 +71,10 @@ export default function Dashboard() {
     <Box sx={{ pt: 1 }}>
       {/* Greeting */}
       <Box sx={{ mb: 4 }}>
-        <Typography sx={{ fontSize: 28, fontWeight: 700, color: "#111827", letterSpacing: "-0.5px", mb: 0.5 }}>
-          Salom, Abduxoshim Sultonqulov!
+        <Typography sx={{ fontSize: 28, fontWeight: 700, color: "text.primary", letterSpacing: "-0.5px", mb: 0.5 }}>
+          Salom, To'ychiboyev Mohirjon!
         </Typography>
-        <Typography sx={{ fontSize: 15, color: "#6B7280" }}>
+        <Typography sx={{ fontSize: 15, color: "text.secondary" }}>
           NajotEdu platformasiga xush kelibsiz!
         </Typography>
       </Box>
@@ -93,7 +94,8 @@ export default function Dashboard() {
             elevation={0}
             sx={{
               borderRadius: "16px",
-              border: "1px solid #E5E7EB",
+              border: "1px solid",
+              borderColor: "divider",
               boxShadow: "0px 2px 4px rgba(0,0,0,0.02)",
               p: 3,
               display: "flex",
@@ -107,13 +109,13 @@ export default function Dashboard() {
               },
             }}
           >
-            <Box sx={{ color: "#6B4BE8", mb: 1.5, display: "flex" }}>
+            <Box sx={{ color: "primary.main", mb: 1.5, display: "flex" }}>
               {s.icon}
             </Box>
-            <Typography sx={{ fontSize: 13, fontWeight: 500, color: "#4B5563", mb: 1 }}>
+            <Typography sx={{ fontSize: 13, fontWeight: 500, color: "text.secondary", mb: 1 }}>
               {s.label}
             </Typography>
-            <Typography sx={{ fontSize: 24, fontWeight: 800, color: "#111827", lineHeight: 1 }}>
+            <Typography sx={{ fontSize: 24, fontWeight: 800, color: "text.primary", lineHeight: 1 }}>
               {s.value}
             </Typography>
           </Card>

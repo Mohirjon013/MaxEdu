@@ -31,7 +31,6 @@ function Loginform() {
                 setInput({ phone: '', password: '' })
             }, 1000);
 
-            console.log(res.data);
         }
         catch (error) {
             console.log(error);

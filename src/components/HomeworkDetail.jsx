@@ -42,7 +42,7 @@ function HomeworkDetail() {
         const hwResponse = responses.pop();
         const hwData = hwResponse.data?.data || hwResponse.data || [];
         const hwList = Array.isArray(hwData) ? hwData : [];
-        const currentHw = hwList.find(h => String(h.id) === String(hwId));
+        const currentHw = hwList.find(h => String(h.id) === String(hwId) || (h.homework && h.homework.some(hw => String(hw.id) === String(hwId))));
 
         if (currentHw) {
           // Tugash vaqtini hisoblash (yuborilgan vaqtga 20 soat qo'shish)
@@ -94,12 +94,22 @@ function HomeworkDetail() {
     <Box sx={{ fontFamily: 'Roboto, sans-serif', pb: 4 }}>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
-        <Box
-          sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, cursor: 'pointer', '&:hover': { opacity: 0.8 } }}
-          onClick={() => navigate(`/dashboard/groups/${id}`)}
-        >
-          <ArrowBackIosNewIcon sx={{ fontSize: '14px', color: '#111827' }} />
-          <Typography sx={{ fontWeight: 700, fontSize: '20px', color: '#111827' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+          <IconButton
+            onClick={() => navigate(`/dashboard/groups/${id}`)}
+            sx={{
+              bgcolor: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              color: '#334155',
+              '&:hover': { bgcolor: '#f1f5f9' },
+              width: 38,
+              height: 38,
+              borderRadius: '10px'
+            }}
+          >
+            <ArrowBackIosNewIcon sx={{ fontSize: '16px', ml: '2px' }} />
+          </IconButton>
+          <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#111827' }}>
             {homework?.topic || 'Uyga vazifa'}
           </Typography>
         </Box>
@@ -177,12 +187,12 @@ function HomeworkDetail() {
                 currentSubmissions.map((sub, index) => {
                   const studentId = sub.student?.id || sub.students?.id || sub.id;
                   return (
-                    <TableRow 
-                      key={studentId || index} 
-                      sx={{ 
-                        '&:last-child td, &:last-child th': { border: 0 }, 
-                        cursor: activeTab === 0 ? 'pointer' : 'default', 
-                        '&:hover': { bgcolor: activeTab === 0 ? '#f8fafc' : 'inherit' } 
+                    <TableRow
+                      key={studentId ? `hw-sub-${studentId}-${index}` : `hw-sub-idx-${index}`}
+                      sx={{
+                        '&:last-child td, &:last-child th': { border: 0 },
+                        cursor: activeTab === 0 ? 'pointer' : 'default',
+                        '&:hover': { bgcolor: activeTab === 0 ? '#f8fafc' : 'inherit' }
                       }}
                       onClick={() => activeTab === 0 && navigate(`/dashboard/groups/${id}/homework/${hwId}/result/${studentId}`)}
                     >

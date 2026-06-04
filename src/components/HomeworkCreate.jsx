@@ -15,6 +15,7 @@ import FormatAlignLeftIcon from '@mui/icons-material/FormatAlignLeft';
 import FormatAlignCenterIcon from '@mui/icons-material/FormatAlignCenter';
 import InsertLinkIcon from '@mui/icons-material/InsertLink';
 import axiosClient from '../api/axios';
+import ErrorModal from './ErrorModal';
 
 function HomeworkCreate() {
   const navigate = useNavigate();
@@ -25,6 +26,7 @@ function HomeworkCreate() {
   const [file, setFile] = useState(null);
   const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
+  const [errorModal, setErrorModal] = useState({ open: false, message: '' });
 
   useEffect(() => {
     async function fetchTopics() {
@@ -51,7 +53,7 @@ function HomeworkCreate() {
 
   const handleSubmit = async () => {
     if (!topic || !description) {
-      alert("Iltimos, mavzu va sarlavhani kiriting.");
+      setErrorModal({ open: true, message: "Iltimos, mavzu va sarlavhani kiriting." });
       return;
     }
     
@@ -74,7 +76,7 @@ function HomeworkCreate() {
       onBack();
     } catch (error) {
       console.error("Vazifa yaratishda xatolik:", error.response?.data || error);
-      alert("Xatolik yuz berdi: " + (error.response?.data?.message || error.message));
+      setErrorModal({ open: true, message: "Xatolik yuz berdi: " + (error.response?.data?.message || error.message) });
     } finally {
       setLoading(false);
     }
@@ -106,13 +108,15 @@ function HomeworkCreate() {
             displayEmpty
             size="small"
             MenuProps={{
-              PaperProps: {
-                elevation: 3,
-                sx: {
-                  mt: 0.5,
-                  borderRadius: '6px',
-                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-                  '& .MuiList-root': { padding: 0 },
+              slotProps: {
+                paper: {
+                  elevation: 3,
+                  sx: {
+                    mt: 0.5,
+                    borderRadius: '6px',
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+                    '& .MuiList-root': { padding: 0 },
+                  }
                 }
               }
             }}
@@ -279,6 +283,11 @@ function HomeworkCreate() {
         </Box>
 
       </Box>
+      <ErrorModal
+        open={errorModal.open}
+        onClose={() => setErrorModal({ open: false, message: '' })}
+        message={errorModal.message}
+      />
     </Box>
   );
 }

@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import bellImg from '../assets/images/bell.png'
 import logoImg from '../assets/images/max-logo.png'
+import { ThemeContext } from "../context/ThemeContext";
 import {
   Box,
   Drawer,
@@ -30,6 +31,7 @@ import {
   SearchRounded,
   NotificationsNoneOutlined,
   DarkModeOutlined,
+  LightModeOutlined,
   KeyboardArrowDownRounded,
   LogoutOutlined,
   AutorenewOutlined,
@@ -76,6 +78,7 @@ export default function MainLayout() {
   const { pathname } = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [managementOpen, setManagementOpen] = useState(pathname === "/management");
+  const { mode, toggleTheme } = useContext(ThemeContext);
 
   const sidebarW = collapsed ? COLLAPSED_WIDTH : SIDEBAR_WIDTH;
 
@@ -90,7 +93,7 @@ export default function MainLayout() {
   };
 
   return (
-    <Box sx={{ display: "flex", height: "100vh", backgroundColor: "#F9FAFB", overflow: "hidden", fontFamily: "Roboto, sans-serif", position: "relative" }}>
+    <Box sx={{ display: "flex", height: "100vh", backgroundColor: "background.default", overflow: "hidden", fontFamily: "Roboto, sans-serif", position: "relative" }}>
 
       {/* ════ SIDEBAR ════ */}
       <Drawer
@@ -101,8 +104,9 @@ export default function MainLayout() {
           "& .MuiDrawer-paper": {
             width: sidebarW,
             boxSizing: "border-box",
-            borderRight: "1px solid #E5E7EB",
-            backgroundColor: "#FFFFFF",
+            borderRight: "1px solid",
+            borderColor: "divider",
+            backgroundColor: "background.paper",
             borderRadius: "0 24px 24px 0",
             transition: "width 0.3s cubic-bezier(0.4,0,0.2,1)",
             overflowX: "hidden", // FIXED SCROLLBAR ISSUE
@@ -113,7 +117,7 @@ export default function MainLayout() {
         }}
       >
         {/* Logo Area */}
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "flex-start", px: collapsed ? 0 : 3, pt: 1, pb: 1, minHeight: 70, borderBottom: "1px solid #D1D5DC", mb: 4 }}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "flex-start", px: collapsed ? 0 : 3, pt: 1, pb: 1, minHeight: 70, borderBottom: "1px solid", borderColor: "divider", mb: 4 }}>
           <Box
             onClick={() => navigate("/dashboard")}
             sx={{
@@ -153,9 +157,9 @@ export default function MainLayout() {
                         py: 1,
                         borderRadius: "14px",
                         backgroundColor: isActive ? PURPLE_MAIN : "transparent",
-                        color: isActive ? "#FFF" : "#4B5563",
+                        color: isActive ? "#FFF" : "text.secondary",
                         "&:hover": {
-                          backgroundColor: isActive ? PURPLE_MAIN : "#F3E8FF", // Light purple background
+                          backgroundColor: isActive ? PURPLE_MAIN : (mode === 'dark' ? "rgba(107, 75, 232, 0.15)" : "#F3E8FF"), // Light purple background
                         },
                         "&:hover .menu-icon": {
                           color: isActive ? "#FFF" : PURPLE_MAIN,
@@ -172,7 +176,7 @@ export default function MainLayout() {
                           minWidth: 0,
                           mr: collapsed ? 0 : 2.5,
                           justifyContent: "center",
-                          color: isActive ? "#FFF" : "#6B7280",
+                          color: isActive ? "#FFF" : "text.secondary",
                           transition: "color 0.3s ease",
                         }}
                       >
@@ -184,7 +188,7 @@ export default function MainLayout() {
                           sx={{
                             fontSize: 15,
                             fontWeight: isActive ? 600 : 500,
-                            color: isActive ? "#FFF" : "#111827",
+                            color: isActive ? "#FFF" : "text.primary",
                             flex: 1,
                             transition: "color 0.3s ease",
                           }}
@@ -202,12 +206,12 @@ export default function MainLayout() {
 
         {/* Subscription Card */}
         {!collapsed && (
-          <Box sx={{ mx: 2.5, mb: 1.5, p: 1.5, borderRadius: "16px", backgroundColor: "#FCEDED", border: "1px solid #FAD4D4" }}>
+          <Box sx={{ mx: 2.5, mb: 1.5, p: 1.5, borderRadius: "16px", backgroundColor: mode === 'dark' ? "rgba(220, 38, 38, 0.1)" : "#FCEDED", border: mode === 'dark' ? "1px solid rgba(220, 38, 38, 0.2)" : "1px solid #FAD4D4" }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
               {/* Bell emoji for 3D look */}
               <img src={bellImg} alt="bell-img" width={35} height={35} />
               <Box>
-                <Typography sx={{ fontSize: 15, fontWeight: 700, color: "#111827", lineHeight: 1.2, mb: 0.5 }}>
+                <Typography sx={{ fontSize: 15, fontWeight: 700, color: "text.primary", lineHeight: 1.2, mb: 0.5 }}>
                   Obuna
                 </Typography>
                 <Typography sx={{ fontSize: 13, fontWeight: 500, color: "#EF4444", lineHeight: 1.2 }}>
@@ -250,8 +254,8 @@ export default function MainLayout() {
                 justifyContent: collapsed ? "center" : "flex-start",
                 px: collapsed ? 0 : 2.5,
                 borderRadius: "14px",
-                color: "#6B7280",
-                "&:hover": { backgroundColor: "#FEF2F2", color: "#EF4444" },
+                color: "text.secondary",
+                "&:hover": { backgroundColor: mode === 'dark' ? "rgba(239, 68, 68, 0.15)" : "#FEF2F2", color: "#EF4444" },
                 transition: "all 0.3s ease",
               }}
             >
@@ -303,8 +307,9 @@ export default function MainLayout() {
             width: 280,
             left: sidebarW,
             boxSizing: "border-box",
-            borderRight: "1px solid #E5E7EB",
-            backgroundColor: "#FFFFFF",
+            borderRight: "1px solid",
+            borderColor: "divider",
+            backgroundColor: "background.paper",
             borderRadius: "0 24px 24px 0",
             boxShadow: managementOpen ? "4px 0 15px rgba(0,0,0,0.05)" : "none",
             transition: "transform 0.3s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s",
@@ -313,9 +318,9 @@ export default function MainLayout() {
         }}
       >
         <Box sx={{ pb: 2, px: 3, display: "flex", flexDirection: "column", height: "100%" }}>
-          <Box sx={{ position: "relative", display: "flex", alignItems: "center", px: 3, minHeight: 80, borderBottom: "1px solid #D1D5DC", mb: 2 }}>
+          <Box sx={{ position: "relative", display: "flex", alignItems: "center", px: 3, minHeight: 80, borderBottom: "1px solid", borderColor: "divider", mb: 2 }}>
 
-            <Typography sx={{ fontSize: 20, fontWeight: 700, color: "#111827", letterSpacing: "-0.5px" }}>
+            <Typography sx={{ fontSize: 20, fontWeight: 700, color: "text.primary", letterSpacing: "-0.5px" }}>
               Menu
             </Typography>
           </Box>
@@ -336,9 +341,9 @@ export default function MainLayout() {
                         borderRadius: "12px",
                         px: 2,
                         py: 1.5,
-                        backgroundColor: isActive ? "#F3F4F6" : "transparent",
-                        color: isActive ? PURPLE_MAIN : "#4B5563",
-                        "&:hover": { backgroundColor: "#F3F4F6", color: PURPLE_MAIN },
+                        backgroundColor: isActive ? (mode === 'dark' ? "#374151" : "#F3F4F6") : "transparent",
+                        color: isActive ? PURPLE_MAIN : "text.secondary",
+                        "&:hover": { backgroundColor: mode === 'dark' ? "#374151" : "#F3F4F6", color: PURPLE_MAIN },
                         transition: "all 0.2s"
                       }}
                     >
@@ -373,11 +378,11 @@ export default function MainLayout() {
           />
         )}
         {/* TOP NAVBAR */}
-        <Box sx={{ position: "relative", display: "flex", alignItems: "center", px: 4, minHeight: 80, gap: 2, flexShrink: 0, backgroundColor: "#F9FAFB" }}>
+        <Box sx={{ position: "relative", display: "flex", alignItems: "center", px: 4, minHeight: 80, gap: 2, flexShrink: 0, backgroundColor: "background.default" }}>
 
           {/* Calendar Button */}
-          <IconButton sx={{ width: 36, height: 36, borderRadius: "8px", backgroundColor: "#FFF", border: "1px solid #E5E7EB", boxShadow: "0 1px 2px rgba(0,0,0,0.05)", ml: 0 }}>
-            <CalendarMonthOutlined sx={{ fontSize: 20, color: "#4B5563" }} />
+          <IconButton sx={{ width: 36, height: 36, borderRadius: "8px", backgroundColor: "background.paper", border: "1px solid", borderColor: "divider", boxShadow: "0 1px 2px rgba(0,0,0,0.05)", ml: 0 }}>
+            <CalendarMonthOutlined sx={{ fontSize: 20, color: "text.secondary" }} />
           </IconButton>
 
           {/* Plus Button */}
@@ -398,28 +403,28 @@ export default function MainLayout() {
           {/* Search */}
           <Paper
             elevation={0}
-            sx={{ display: "flex", alignItems: "center", width: 280, height: 36, px: 1.5, borderRadius: "8px", border: "1px solid #E5E7EB", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}
+            sx={{ display: "flex", alignItems: "center", width: 280, height: 36, px: 1.5, borderRadius: "8px", border: "1px solid", borderColor: "divider", boxShadow: "0 1px 2px rgba(0,0,0,0.05)", backgroundColor: "background.paper" }}
           >
-            <SearchRounded sx={{ color: "#9CA3AF", fontSize: 20, mr: 1 }} />
-            <InputBase placeholder="Qidirish..." sx={{ ml: 1, flex: 1, fontSize: 14, color: "#111827" }} />
+            <SearchRounded sx={{ color: "text.secondary", fontSize: 20, mr: 1 }} />
+            <InputBase placeholder="Qidirish..." sx={{ ml: 1, flex: 1, fontSize: 14, color: "text.primary" }} />
           </Paper>
 
           {/* Right Side */}
           <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: 1.5 }}>
             <Button
-              endIcon={<KeyboardArrowDownRounded sx={{ color: "#6B7280" }} />}
+              endIcon={<KeyboardArrowDownRounded sx={{ color: "text.secondary" }} />}
               sx={{
-                height: 36, px: 2, borderRadius: "8px", backgroundColor: "#FFF", border: "1px solid #E5E7EB", boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-                color: "#4B5563", textTransform: "none", fontSize: 14, fontWeight: 500, "&:hover": { backgroundColor: "#F9FAFB" }
+                height: 36, px: 2, borderRadius: "8px", backgroundColor: "background.paper", border: "1px solid", borderColor: "divider", boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                color: "text.secondary", textTransform: "none", fontSize: 14, fontWeight: 500, "&:hover": { backgroundColor: mode === 'dark' ? "#374151" : "#F9FAFB" }
               }}
             >
               O'zbekcha
             </Button>
-            <IconButton sx={{ color: "#4B5563", ml: 1 }}>
+            <IconButton sx={{ color: "text.secondary", ml: 1 }}>
               <NotificationsNoneOutlined sx={{ fontSize: 22 }} />
             </IconButton>
-            <IconButton sx={{ color: "#4B5563" }}>
-              <DarkModeOutlined sx={{ fontSize: 22 }} />
+            <IconButton onClick={toggleTheme} sx={{ color: "text.secondary" }}>
+              {mode === 'dark' ? <LightModeOutlined sx={{ fontSize: 22 }} /> : <DarkModeOutlined sx={{ fontSize: 22 }} />}
             </IconButton>
             <Avatar sx={{ width: 36, height: 36, backgroundColor: PURPLE_MAIN, fontSize: 16, fontWeight: 700, cursor: "pointer", ml: 1 }}>
               A

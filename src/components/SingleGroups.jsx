@@ -48,7 +48,6 @@ function SingleGroups() {
     async function fetchGroup() {
       try {
         const res = await axiosClient.get(`/groups/one/${id}`);
-        console.log(res.data);
 
         const rawData = res.data.data || res.data;
         const actualGroup = Array.isArray(rawData) ? rawData[0] : (rawData.group || rawData);
@@ -237,21 +236,21 @@ function SingleGroups() {
                         </Box>
                         <Box sx={{ display: 'flex', gap: 1, overflowX: 'auto', pb: 1 }}>
                           {monthData?.days?.map((dayObj, dIdx) => {
-                            const monthNums = {'jan':'01','feb':'02','mar':'03','apr':'04','may':'05','jun':'06','jul':'07','aug':'08','sep':'09','oct':'10','nov':'11','dec':'12'};
+                            const monthNums = { 'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04', 'may': '05', 'jun': '06', 'jul': '07', 'aug': '08', 'sep': '09', 'oct': '10', 'nov': '11', 'dec': '12' };
                             const mKey = (dayObj.month || '').substring(0, 3).toLowerCase();
                             const isoDate = `${new Date().getFullYear()}-${monthNums[mKey] || '01'}-${String(dayObj.day).padStart(2, '0')}`;
-                            
+
                             const targetDateObj = parseIsoToDate(isoDate);
                             const today = new Date();
                             today.setHours(0, 0, 0, 0);
-                            
+
                             const isFuture = targetDateObj > today;
                             const isPast = targetDateObj < today;
                             const isToday = targetDateObj.getTime() === today.getTime();
 
                             return (
-                              <Box 
-                                key={dIdx} 
+                              <Box
+                                key={dIdx}
                                 onClick={(e) => {
                                   if (isFuture) {
                                     e.preventDefault();
@@ -259,20 +258,20 @@ function SingleGroups() {
                                     return;
                                   }
                                   navigate(`/dashboard/groups/${id}/lesson/${isoDate}`);
-                                }} 
-                                sx={{ 
-                                  minWidth: '40px', 
-                                  height: '48px', 
-                                  bgcolor: isToday ? '#dbeafe' : (isPast ? '#e2e8f0' : '#fff'), 
-                                  border: isToday ? '2px solid #3b82f6' : (isPast ? 'none' : '1px solid #e2e8f0'), 
-                                  borderRadius: '6px', 
-                                  display: 'flex', 
-                                  flexDirection: 'column', 
-                                  alignItems: 'center', 
-                                  justifyContent: 'center', 
-                                  cursor: isFuture ? 'not-allowed' : 'pointer', 
+                                }}
+                                sx={{
+                                  minWidth: '40px',
+                                  height: '48px',
+                                  bgcolor: isToday ? '#dbeafe' : (isPast ? '#e2e8f0' : '#fff'),
+                                  border: isToday ? '2px solid #3b82f6' : (isPast ? 'none' : '1px solid #e2e8f0'),
+                                  borderRadius: '6px',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  cursor: isFuture ? 'not-allowed' : 'pointer',
                                   opacity: isFuture ? 0.5 : 1,
-                                  '&:hover': { opacity: isFuture ? 0.5 : 0.8 } 
+                                  '&:hover': { opacity: isFuture ? 0.5 : 0.8 }
                                 }}
                               >
                                 <Typography sx={{ fontSize: '10px', color: isToday ? '#1d4ed8' : (isPast ? '#64748b' : '#94a3b8') }}>{dayObj.month.slice(0, 3)}</Typography>
@@ -300,21 +299,21 @@ function SingleGroups() {
                         </Box>
                         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                           {monthData?.days?.map((dayObj, dIdx) => {
-                            const monthNums = {'jan':'01','feb':'02','mar':'03','apr':'04','may':'05','jun':'06','jul':'07','aug':'08','sep':'09','oct':'10','nov':'11','dec':'12'};
+                            const monthNums = { 'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04', 'may': '05', 'jun': '06', 'jul': '07', 'aug': '08', 'sep': '09', 'oct': '10', 'nov': '11', 'dec': '12' };
                             const mKey = (dayObj.month || '').substring(0, 3).toLowerCase();
                             const isoDate = `${new Date().getFullYear()}-${monthNums[mKey] || '01'}-${String(dayObj.day).padStart(2, '0')}`;
-                            
+
                             const targetDateObj = parseIsoToDate(isoDate);
                             const today = new Date();
                             today.setHours(0, 0, 0, 0);
-                            
+
                             const isFuture = targetDateObj > today;
                             const isPast = targetDateObj < today;
                             const isToday = targetDateObj.getTime() === today.getTime();
 
                             return (
-                              <Box 
-                                key={dIdx} 
+                              <Box
+                                key={dIdx}
                                 onClick={(e) => {
                                   if (isFuture) {
                                     e.preventDefault();
@@ -322,20 +321,20 @@ function SingleGroups() {
                                     return;
                                   }
                                   navigate(`/dashboard/groups/${id}/lesson/${isoDate}`);
-                                }} 
-                                sx={{ 
-                                  width: '36px', 
-                                  height: '44px', 
-                                  bgcolor: isToday ? '#dbeafe' : (isPast ? '#e2e8f0' : '#fff'), 
-                                  border: isToday ? '2px solid #3b82f6' : (isPast ? 'none' : '1px solid #e2e8f0'), 
-                                  borderRadius: '6px', 
-                                  display: 'flex', 
-                                  flexDirection: 'column', 
-                                  alignItems: 'center', 
-                                  justifyContent: 'center', 
-                                  cursor: isFuture ? 'not-allowed' : 'pointer', 
+                                }}
+                                sx={{
+                                  width: '36px',
+                                  height: '44px',
+                                  bgcolor: isToday ? '#dbeafe' : (isPast ? '#e2e8f0' : '#fff'),
+                                  border: isToday ? '2px solid #3b82f6' : (isPast ? 'none' : '1px solid #e2e8f0'),
+                                  borderRadius: '6px',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  cursor: isFuture ? 'not-allowed' : 'pointer',
                                   opacity: isFuture ? 0.5 : 1,
-                                  '&:hover': { opacity: isFuture ? 0.5 : 0.8 } 
+                                  '&:hover': { opacity: isFuture ? 0.5 : 0.8 }
                                 }}
                               >
                                 <Typography sx={{ fontSize: '10px', color: isToday ? '#1d4ed8' : (isPast ? '#64748b' : '#94a3b8') }}>{dayObj.month.slice(0, 3)}</Typography>

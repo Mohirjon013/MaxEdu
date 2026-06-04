@@ -10,6 +10,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import NoteAddOutlinedIcon from '@mui/icons-material/NoteAddOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlined';
 import axiosClient from '../api/axios';
+import ErrorModal from './ErrorModal';
 
 const getVideoUrl = (url) => {
   if (!url) return '';
@@ -62,6 +63,7 @@ function GroupLessons() {
   const [groupLessons, setGroupLessons] = useState([]);
   const [refreshKey, setRefreshKey] = useState(0);
   const [uploadLoading, setUploadLoading] = useState(false);
+  const [errorModal, setErrorModal] = useState({ open: false, message: '' });
 
   useEffect(() => {
     async function fetchLessons() {
@@ -137,7 +139,7 @@ function GroupLessons() {
   const handleUpload = async () => {
     const invalidFiles = selectedFiles.filter(f => !f.lessonId);
     if (invalidFiles.length > 0) {
-      alert("Iltimos, barcha fayllar uchun darsni tanlang!");
+      setErrorModal({ open: true, message: "Iltimos, barcha fayllar uchun darsni tanlang!" });
       return;
     }
 
@@ -158,7 +160,7 @@ function GroupLessons() {
       setRefreshKey(prev => prev + 1);
     } catch (error) {
       console.error("Yuklashda xatolik:", error);
-      alert("Fayllarni yuklashda xatolik yuz berdi.");
+      setErrorModal({ open: true, message: "Fayllarni yuklashda xatolik yuz berdi." });
     } finally {
       setUploadLoading(false);
     }
@@ -257,8 +259,11 @@ function GroupLessons() {
                   ) : lessons.length > 0 ? (
                     lessons.map((lesson, index) => (
                       <TableRow 
-                        key={lesson.id || index} 
-                        onClick={() => navigate(`/dashboard/groups/${id}/homework/${lesson.id}`)}
+                        key={lesson.id ? `lesson-${lesson.id}-${index}` : index} 
+                        onClick={() => {
+                          const hwId = lesson.homework && lesson.homework.length > 0 ? lesson.homework[0].id : lesson.id;
+                          navigate(`/dashboard/groups/${id}/homework/${hwId}`);
+                        }}
                         sx={{ 
                           '&:last-child td, &:last-child th': { border: 0 },
                           cursor: 'pointer',
@@ -314,7 +319,7 @@ function GroupLessons() {
                     </TableRow>
                   ) : lessons.length > 0 ? (
                     lessons.map((video, index) => (
-                      <TableRow key={video.id || index} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                      <TableRow key={video.id ? `video-${video.id}-${index}` : index} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                         <TableCell sx={{ color: '#1e293b', fontWeight: 600, fontSize: '14px', py: 2.5, borderBottom: '1px solid #f1f5f9' }}>{index + 1}</TableCell>
                         <TableCell sx={{ py: 2.5, borderBottom: '1px solid #f1f5f9' }}>
                           <Box
@@ -472,8 +477,8 @@ function GroupLessons() {
                       sx={{ fontSize: '14px', bgcolor: '#fff', borderRadius: '6px' }}
                     >
                       <MenuItem value="" disabled>Darsni tanlang</MenuItem>
-                      {groupLessons.map(lesson => (
-                        <MenuItem key={lesson.id} value={lesson.id}>{lesson.topic || lesson.title || `Dars ${lesson.id}`}</MenuItem>
+                      {groupLessons.map((lesson, index) => (
+                        <MenuItem key={lesson.id ? `groupLesson-${lesson.id}-${index}` : index} value={lesson.id}>{lesson.topic || lesson.title || `Dars ${lesson.id}`}</MenuItem>
                       ))}
                     </Select>
                     <TextField
@@ -526,6 +531,12 @@ function GroupLessons() {
           </Box>
         </Box>
       </Modal>
+
+      <ErrorModal
+        open={errorModal.open}
+        onClose={() => setErrorModal({ open: false, message: '' })}
+        message={errorModal.message}
+      />
     </Box>
   );
 }

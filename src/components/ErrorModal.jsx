@@ -9,14 +9,16 @@ const ErrorModal = ({ open, onClose, message, title = "Xatolik yuz berdi" }) => 
       open={open}
       onClose={onClose}
       style={{ zIndex: 99999 }}
-      BackdropProps={{ invisible: true }}
-      PaperProps={{
-        sx: {
-          borderRadius: '16px',
-          width: '400px',
-          maxWidth: '400px',
-          overflow: 'hidden',
-          boxShadow: '0 10px 40px -10px rgba(0,0,0,0.2)'
+      slotProps={{
+        backdrop: { invisible: true },
+        paper: {
+          sx: {
+            borderRadius: '16px',
+            width: '400px',
+            maxWidth: '400px',
+            overflow: 'hidden',
+            boxShadow: '0 10px 40px -10px rgba(0,0,0,0.2)'
+          }
         }
       }}
     >

@@ -6,8 +6,8 @@ function DeleteConfirmModal({ open, onClose, onConfirm, title }) {
     <Dialog
       open={open}
       onClose={onClose}
-      PaperProps={{
-        sx: { borderRadius: '8px' }
+      slotProps={{
+        paper: { sx: { borderRadius: '8px' } }
       }}
     >
       <Box sx={{ p: 2, py: 1.5, width: "310px" }}>
