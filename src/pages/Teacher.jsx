@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect, useTransition } from 'react';
+import useDebounce from '../hook/useDebounce';
 import {
   Box, Typography, Button, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, Checkbox, Avatar, Chip, IconButton,
-  InputBase, Pagination, Drawer, Dialog, TextField,
+  InputBase, Pagination, Drawer, Dialog, TextField, CircularProgress,
 } from '@mui/material';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -33,6 +34,7 @@ function Teacher() {
   const [editTeacherId, setEditTeacherId] = useState(null);
   const [isArchiveView, setIsArchiveView] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 800);
   const [errorModal, setErrorModal] = useState({ open: false, message: "" });
   const fileInputRef = useRef(null);
   const groupsLoaded = useRef(false);
@@ -198,8 +200,8 @@ function Teacher() {
   };
 
   const filteredTeachers = teacher.filter(t =>
-    (t.full_name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-    (t.phone || '').includes(searchQuery)
+    (t.full_name?.toLowerCase() || '').includes(debouncedSearch.toLowerCase()) ||
+    (t.phone || '').includes(debouncedSearch)
   );
 
   const itemsPerPage = 5;
@@ -282,7 +284,7 @@ function Teacher() {
           </Box>
 
           <TableContainer sx={{ overflowY: 'auto', pr: 1, flex: 1 }} >
-            {isLoading || isPending ? (
+            {isLoading || isPending || searchQuery !== debouncedSearch ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '395px', }}>
                 <img src={loading} alt="loading" width={90} height={90} />
               </Box>
@@ -339,7 +341,7 @@ function Teacher() {
                         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5, opacity: 0.8 }}>
                           <SearchOffIcon sx={{ fontSize: 56, color: '#9CA3AF' }} />
                           <Typography sx={{ color: '#6B7280', fontSize: '15px', fontWeight: 500 }}>
-                            {searchQuery ? "Qidiruvingiz bo'yicha ma'lumot topilmadi" : "Hozircha ma'lumotlar mavjud emas"}
+                            {debouncedSearch ? "Qidiruvingiz bo'yicha ma'lumot topilmadi" : "Hozircha ma'lumotlar mavjud emas"}
                           </Typography>
                         </Box>
                       </TableCell>
@@ -510,10 +512,10 @@ function Teacher() {
         />
 
         {/* Error Modal */}
-        <ErrorModal 
-          open={errorModal.open} 
-          onClose={() => setErrorModal({ ...errorModal, open: false })} 
-          message={errorModal.message} 
+        <ErrorModal
+          open={errorModal.open}
+          onClose={() => setErrorModal({ ...errorModal, open: false })}
+          message={errorModal.message}
         />
 
       </Box>

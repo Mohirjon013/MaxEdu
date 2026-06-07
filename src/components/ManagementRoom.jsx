@@ -166,54 +166,54 @@ const ManagementRoom = () => {
         <Paper sx={{ height: '480px', bgcolor: '#fff', borderRadius: '12px', p: 3, border: '1px solid #f3f4f6', boxShadow: '0 2px 10px rgba(0,0,0,0.04)', overflow: 'hidden' }}>
           {/* Card Header */}
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography sx={{ fontSize: '26px', fontWeight: 700, color: '#111827' }}>
-                  Xonalar {isArchiveView && <span style={{ color: '#7C3AED', fontSize: '24px' }}>(Arxiv)</span>}
-                </Typography>
-                <IconButton size="small" onClick={fetchRooms} sx={{ color: '#9ca3af', transition: 'color 0.2s', '&:hover': { color: '#111827' } }}>
-                  <RefreshOutlined fontSize="small" />
-                </IconButton>
-              </Box>
-
-              <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
-                <Button
-                  variant={isArchiveView ? 'contained' : 'outlined'}
-                  onClick={() => setIsArchiveView(!isArchiveView)}
-                  sx={{
-                    fontWeight: 600, fontSize: '14px', px: 2.5, py: 1,
-                    borderRadius: '8px', textTransform: 'none', transition: 'all 0.2s',
-                    ...(isArchiveView
-                      ? { bgcolor: '#7C3AED', color: '#fff', boxShadow: 'none', '&:hover': { bgcolor: '#5B21B6', boxShadow: 'none' } }
-                      : { color: '#333', borderColor: '#e0e0e0', boxShadow: 'none', '&:hover': { borderColor: '#ccc', bgcolor: '#f9f9f9' } }
-                    )
-                  }}
-                >
-                  Arxiv
-                </Button>
-                <Button
-                  onClick={() => { resetForm(); setIsDrawerOpen(true); }}
-                  sx={{
-                    display: 'flex', alignItems: 'center', gap: 0.5, bgcolor: '#7C3AED',
-                    color: '#fff', fontSize: '14px', fontWeight: 600, px: 2.5, py: 1,
-                    borderRadius: '8px', textTransform: 'none', transition: 'all 0.2s',
-                    boxShadow: '0 4px 14px 0 rgba(124,58,237,0.2)',
-                    '&:hover': { bgcolor: '#6D28D9', boxShadow: '0 4px 14px 0 rgba(124,58,237,0.3)' }
-                  }}
-                >
-                  <Typography component="span" sx={{ fontSize: '18px', lineHeight: 1 }}>+</Typography>
-                  Xonani qo'shish
-                </Button>
-              </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography sx={{ fontSize: '26px', fontWeight: 700, color: '#111827' }}>
+                Xonalar {isArchiveView && <span style={{ color: '#7C3AED', fontSize: '24px' }}>(Arxiv)</span>}
+              </Typography>
+              <IconButton size="small" onClick={fetchRooms} sx={{ color: '#9ca3af', transition: 'color 0.2s', '&:hover': { color: '#111827' } }}>
+                <RefreshOutlined fontSize="small" />
+              </IconButton>
             </Box>
 
-            {/* Grid */}
-            {isLoading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '380px' }}>
-                <img src={loading} alt="loading" width={90} height={90} />
-              </Box>
-            ) : (
-              <Box sx={{
-                display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 2.5,
+            <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+              <Button
+                variant={isArchiveView ? 'contained' : 'outlined'}
+                onClick={() => setIsArchiveView(!isArchiveView)}
+                sx={{
+                  fontWeight: 600, fontSize: '14px', px: 2.5, py: 1,
+                  borderRadius: '8px', textTransform: 'none', transition: 'all 0.2s',
+                  ...(isArchiveView
+                    ? { bgcolor: '#7C3AED', color: '#fff', boxShadow: 'none', '&:hover': { bgcolor: '#5B21B6', boxShadow: 'none' } }
+                    : { color: '#333', borderColor: '#e0e0e0', boxShadow: 'none', '&:hover': { borderColor: '#ccc', bgcolor: '#f9f9f9' } }
+                  )
+                }}
+              >
+                Arxiv
+              </Button>
+              <Button
+                onClick={() => { resetForm(); setIsDrawerOpen(true); }}
+                sx={{
+                  display: 'flex', alignItems: 'center', gap: 0.5, bgcolor: '#7C3AED',
+                  color: '#fff', fontSize: '14px', fontWeight: 600, px: 2.5, py: 1,
+                  borderRadius: '8px', textTransform: 'none', transition: 'all 0.2s',
+                  boxShadow: '0 4px 14px 0 rgba(124,58,237,0.2)',
+                  '&:hover': { bgcolor: '#6D28D9', boxShadow: '0 4px 14px 0 rgba(124,58,237,0.3)' }
+                }}
+              >
+                <Typography component="span" sx={{ fontSize: '18px', lineHeight: 1 }}>+</Typography>
+                Xonani qo'shish
+              </Button>
+            </Box>
+          </Box>
+
+          {/* Grid */}
+          {isLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '380px' }}>
+              <img src={loading} alt="loading" width={90} height={90} />
+            </Box>
+          ) : (
+            <Box sx={{
+              display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 2.5,
               maxHeight: '380px', overflowY: 'auto', pr: 1,
               '&::-webkit-scrollbar': { width: '4px' },
               '&::-webkit-scrollbar-track': { background: 'transparent' },

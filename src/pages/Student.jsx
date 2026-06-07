@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect, useTransition } from 'react';
+import useDebounce from '../hook/useDebounce';
 import {
   Box, Typography, Button, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, Checkbox, Avatar, Chip, IconButton,
-  InputBase, Pagination, Drawer, Dialog, TextField,
+  InputBase, Pagination, Drawer, Dialog, TextField, CircularProgress,
 } from '@mui/material';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -33,6 +34,7 @@ function Student() {
   const [editStudentId, setEditStudentId] = useState(null);
   const [isArchiveView, setIsArchiveView] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 800);
   const [errorModal, setErrorModal] = useState({ open: false, message: "" });
   const fileInputRef = useRef(null);
   const groupsLoaded = useRef(false);
@@ -205,8 +207,8 @@ function Student() {
   };
 
   const filteredStudents = student.filter(t =>
-    (t.full_name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-    (t.phone || '').includes(searchQuery)
+    (t.full_name?.toLowerCase() || '').includes(debouncedSearch.toLowerCase()) ||
+    (t.phone || '').includes(debouncedSearch)
   );
 
   const itemsPerPage = 5;
@@ -284,6 +286,9 @@ function Student() {
                 }}
                 sx={{ ml: 1, flex: 1, fontSize: '14px' }}
               />
+              {searchQuery !== debouncedSearch && (
+                <CircularProgress size={16} thickness={5} sx={{ color: '#7C3AED', flexShrink: 0 }} />
+              )}
             </Box>
           </Box>
 
@@ -347,7 +352,7 @@ function Student() {
                         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5, opacity: 0.8 }}>
                           <SearchOffIcon sx={{ fontSize: 56, color: '#9CA3AF' }} />
                           <Typography sx={{ color: '#6B7280', fontSize: '15px', fontWeight: 500 }}>
-                            {searchQuery ? "Qidiruvingiz bo'yicha ma'lumot topilmadi" : "Hozircha ma'lumotlar mavjud emas"}
+                            {debouncedSearch ? "Qidiruvingiz bo'yicha ma'lumot topilmadi" : "Hozircha ma'lumotlar mavjud emas"}
                           </Typography>
                         </Box>
                       </TableCell>

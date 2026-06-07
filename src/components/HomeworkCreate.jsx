@@ -86,10 +86,10 @@ function HomeworkCreate() {
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, pt: 1 }}>
       {/* Header */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-        <IconButton onClick={onBack} sx={{ color: '#111827' }}>
+        <IconButton onClick={onBack} sx={{ color: 'text.primary' }}>
           <ArrowBackIosNewIcon fontSize="small" sx={{ fontWeight: 700 }} />
         </IconButton>
-        <Typography sx={{ fontSize: '24px', fontWeight: 700, color: '#111827' }}>
+        <Typography sx={{ fontSize: '24px', fontWeight: 700, color: 'text.primary' }}>
           Yangi uyga vazifa yaratish
         </Typography>
       </Box>
@@ -99,7 +99,7 @@ function HomeworkCreate() {
 
         {/* Mavzu */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Typography sx={{ fontSize: '14px', fontWeight: 700, color: '#111827' }}>
+          <Typography sx={{ fontSize: '14px', fontWeight: 700, color: 'text.primary' }}>
             <span style={{ color: '#ef4444' }}>*</span> Mavzu
           </Typography>
           <Select
@@ -115,6 +115,7 @@ function HomeworkCreate() {
                     mt: 0.5,
                     borderRadius: '6px',
                     boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+                    bgcolor: 'background.paper',
                     '& .MuiList-root': { padding: 0 },
                   }
                 }
@@ -122,16 +123,16 @@ function HomeworkCreate() {
             }}
             sx={{
               borderRadius: '6px',
-              bgcolor: '#fff',
+              bgcolor: 'background.paper',
               fontSize: '15px',
               height: '42px',
-              color: topic ? '#1e293b' : '#94a3b8',
-              '& .MuiOutlinedInput-notchedOutline': { borderColor: '#cbd5e1' },
-              '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#2563eb' },
-              '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#2563eb', borderWidth: '2px' },
+              color: topic ? 'text.primary' : 'text.secondary',
+              '& .MuiOutlinedInput-notchedOutline': { borderColor: 'divider' },
+              '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'primary.main' },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'primary.main', borderWidth: '2px' },
             }}
           >
-            <MenuItem value="" disabled sx={{ color: '#94a3b8', fontSize: '15px', py: 1.2 }}>Mavzulardan birini tanlang</MenuItem>
+            <MenuItem value="" disabled sx={{ color: 'text.secondary', fontSize: '15px', py: 1.2 }}>Mavzulardan birini tanlang</MenuItem>
             {topics.map((t, index) => (
               <MenuItem key={t.id || index} value={t.id || t.lesson_id} sx={{ fontSize: '15px', py: 1.2 }}>
                 {t.title || t.topic || t.name || 'Nomsiz mavzu'}
@@ -142,36 +143,36 @@ function HomeworkCreate() {
 
         {/* Izoh (Rich Text Editor Mock) */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Typography sx={{ fontSize: '14px', fontWeight: 700, color: '#111827' }}>
+          <Typography sx={{ fontSize: '14px', fontWeight: 700, color: 'text.primary' }}>
             <span style={{ color: '#ef4444' }}>*</span> Sarlavha
           </Typography>
-          <Paper variant="outlined" sx={{ borderRadius: '8px', borderColor: '#e2e8f0', overflow: 'hidden' }}>
+          <Paper variant="outlined" sx={{ borderRadius: '8px', borderColor: 'divider', overflow: 'hidden', bgcolor: 'background.paper' }}>
             {/* Toolbar */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1, borderBottom: '1px solid #e2e8f0', flexWrap: 'wrap' }}>
-              <Button sx={{ minWidth: 0, color: '#475569', fontWeight: 600 }}>H1</Button>
-              <Button sx={{ minWidth: 0, color: '#475569', fontWeight: 600 }}>H2</Button>
-              <Select size="small" defaultValue="sans" sx={{ '& .MuiOutlinedInput-notchedOutline': { border: 'none' }, color: '#475569', fontWeight: 500, height: 32 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1, borderBottom: '1px solid', borderColor: 'divider', flexWrap: 'wrap' }}>
+              <Button sx={{ minWidth: 0, color: 'text.secondary', fontWeight: 600 }}>H1</Button>
+              <Button sx={{ minWidth: 0, color: 'text.secondary', fontWeight: 600 }}>H2</Button>
+              <Select size="small" defaultValue="sans" sx={{ '& .MuiOutlinedInput-notchedOutline': { border: 'none' }, color: 'text.secondary', fontWeight: 500, height: 32 }}>
                 <MenuItem value="sans">Sans Serif</MenuItem>
                 <MenuItem value="serif">Serif</MenuItem>
               </Select>
               <Divider orientation="vertical" flexItem sx={{ mx: 0.5, my: 0.5 }} />
-              <Select size="small" defaultValue="normal" sx={{ '& .MuiOutlinedInput-notchedOutline': { border: 'none' }, color: '#475569', fontWeight: 500, height: 32 }}>
+              <Select size="small" defaultValue="normal" sx={{ '& .MuiOutlinedInput-notchedOutline': { border: 'none' }, color: 'text.secondary', fontWeight: 500, height: 32 }}>
                 <MenuItem value="normal">Normal</MenuItem>
                 <MenuItem value="large">Large</MenuItem>
               </Select>
               <Divider orientation="vertical" flexItem sx={{ mx: 0.5, my: 0.5 }} />
-              <IconButton size="small" sx={{ color: '#475569' }}><FormatBoldIcon fontSize="small" /></IconButton>
-              <IconButton size="small" sx={{ color: '#475569' }}><FormatItalicIcon fontSize="small" /></IconButton>
-              <IconButton size="small" sx={{ color: '#475569' }}><FormatUnderlinedIcon fontSize="small" /></IconButton>
-              <IconButton size="small" sx={{ color: '#475569' }}><StrikethroughSIcon fontSize="small" /></IconButton>
-              <IconButton size="small" sx={{ color: '#475569' }}><FormatQuoteIcon fontSize="small" /></IconButton>
-              <IconButton size="small" sx={{ color: '#475569' }}><CodeIcon fontSize="small" /></IconButton>
+              <IconButton size="small" sx={{ color: 'text.secondary' }}><FormatBoldIcon fontSize="small" /></IconButton>
+              <IconButton size="small" sx={{ color: 'text.secondary' }}><FormatItalicIcon fontSize="small" /></IconButton>
+              <IconButton size="small" sx={{ color: 'text.secondary' }}><FormatUnderlinedIcon fontSize="small" /></IconButton>
+              <IconButton size="small" sx={{ color: 'text.secondary' }}><StrikethroughSIcon fontSize="small" /></IconButton>
+              <IconButton size="small" sx={{ color: 'text.secondary' }}><FormatQuoteIcon fontSize="small" /></IconButton>
+              <IconButton size="small" sx={{ color: 'text.secondary' }}><CodeIcon fontSize="small" /></IconButton>
               <Divider orientation="vertical" flexItem sx={{ mx: 0.5, my: 0.5 }} />
-              <IconButton size="small" sx={{ color: '#475569' }}><FormatListBulletedIcon fontSize="small" /></IconButton>
-              <IconButton size="small" sx={{ color: '#475569' }}><FormatListNumberedIcon fontSize="small" /></IconButton>
-              <IconButton size="small" sx={{ color: '#475569' }}><FormatAlignLeftIcon fontSize="small" /></IconButton>
-              <IconButton size="small" sx={{ color: '#475569' }}><FormatAlignCenterIcon fontSize="small" /></IconButton>
-              <IconButton size="small" sx={{ color: '#475569' }}><InsertLinkIcon fontSize="small" /></IconButton>
+              <IconButton size="small" sx={{ color: 'text.secondary' }}><FormatListBulletedIcon fontSize="small" /></IconButton>
+              <IconButton size="small" sx={{ color: 'text.secondary' }}><FormatListNumberedIcon fontSize="small" /></IconButton>
+              <IconButton size="small" sx={{ color: 'text.secondary' }}><FormatAlignLeftIcon fontSize="small" /></IconButton>
+              <IconButton size="small" sx={{ color: 'text.secondary' }}><FormatAlignCenterIcon fontSize="small" /></IconButton>
+              <IconButton size="small" sx={{ color: 'text.secondary' }}><InsertLinkIcon fontSize="small" /></IconButton>
             </Box>
             {/* Editor Area */}
             <TextField
@@ -186,8 +187,11 @@ function HomeworkCreate() {
                   '& fieldset': { border: 'none' },
                 },
                 '& .MuiInputBase-input::placeholder': {
-                  color: '#94a3b8',
+                  color: 'text.secondary',
                   opacity: 1,
+                },
+                '& .MuiInputBase-input': {
+                  color: 'text.primary',
                 }
               }}
             />
@@ -202,16 +206,17 @@ function HomeworkCreate() {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            border: '2px dashed #cbd5e1',
+            border: '2px dashed',
+            borderColor: 'divider',
             borderRadius: '12px',
-            bgcolor: 'white',
+            bgcolor: 'background.paper',
             py: 6,
             gap: 2,
             cursor: 'pointer',
             transition: 'all 0.2s',
             '&:hover': {
-              borderColor: '#10b981',
-              bgcolor: '#ecfdf5',
+              borderColor: 'primary.main',
+              bgcolor: 'action.hover',
             }
           }}
         >
@@ -221,8 +226,8 @@ function HomeworkCreate() {
             ref={fileInputRef}
             onChange={handleFileChange}
           />
-          <CloudUploadIcon sx={{ fontSize: 48, color: '#10b981' }} />
-          <Typography sx={{ color: '#64748b', fontSize: '15px', fontWeight: 500 }}>
+          <CloudUploadIcon sx={{ fontSize: 48, color: 'primary.main' }} />
+          <Typography sx={{ color: 'text.secondary', fontSize: '15px', fontWeight: 500 }}>
             {file ? file.name : "Faylni tanlash yoki shu yerga tashlang (Ixtiyoriy)"}
           </Typography>
         </Box>
@@ -234,8 +239,8 @@ function HomeworkCreate() {
             disabled={loading}
             variant="outlined"
             sx={{
-              color: '#475569',
-              borderColor: '#e2e8f0',
+              color: 'text.primary',
+              borderColor: 'divider',
               textTransform: 'none',
               fontWeight: 600,
               fontSize: '15px',
@@ -243,8 +248,8 @@ function HomeworkCreate() {
               px: 4,
               py: 1,
               '&:hover': {
-                bgcolor: '#f8fafc',
-                borderColor: '#cbd5e1',
+                bgcolor: 'action.hover',
+                borderColor: 'divider',
               }
             }}
           >
@@ -255,7 +260,7 @@ function HomeworkCreate() {
             disabled={loading}
             variant="contained"
             sx={{
-              bgcolor: '#10b981',
+              bgcolor: 'primary.main',
               color: '#fff',
               textTransform: 'none',
               fontWeight: 700,
@@ -263,17 +268,17 @@ function HomeworkCreate() {
               borderRadius: '10px',
               px: 4,
               py: 1,
-              boxShadow: '0px 1px 3px rgba(16, 185, 129, 0.4)',
+              boxShadow: '0px 1px 3px rgba(107, 75, 232, 0.4)',
               transition: 'all 0.2s ease',
               '&:hover': {
-                bgcolor: '#059669',
-                boxShadow: '0px 3px 4px rgba(16, 185, 129, 0.5)',
+                bgcolor: 'primary.dark',
+                boxShadow: '0px 3px 4px rgba(107, 75, 232, 0.5)',
               },
               '&:active': {
-                boxShadow: '0px 1px 2px rgba(16, 185, 129, 0.4)',
+                boxShadow: '0px 1px 2px rgba(107, 75, 232, 0.4)',
               },
               '&.Mui-disabled': {
-                bgcolor: '#a7f3d0',
+                bgcolor: 'primary.light',
                 color: '#fff',
               }
             }}

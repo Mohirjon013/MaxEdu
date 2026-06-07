@@ -1,7 +1,6 @@
 import React, { useState, useContext } from "react";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import bellImg from '../assets/images/bell.png'
-import logoImg from '../assets/images/max-logo.png'
 import { ThemeContext } from "../context/ThemeContext";
 import {
   Box,
@@ -141,7 +140,7 @@ export default function MainLayout() {
         <Box sx={{ flex: 1, px: collapsed ? 2 : 1.5, display: "flex", flexDirection: "column", gap: 1 }}>
           <List disablePadding>
             {menuItems.map((item) => {
-              const isActive = item.path === "/dashboard" 
+              const isActive = item.path === "/dashboard"
                 ? pathname === "/dashboard"
                 : (item.path && pathname.startsWith(item.path));
               return (
@@ -288,7 +287,8 @@ export default function MainLayout() {
           color: "#FFF",
           "&:hover": { backgroundColor: "#5a3cd9" },
           boxShadow: "0 2px 8px rgba(107, 75, 232, 0.3)",
-          border: "2px solid #FFF",
+          border: "2px solid",
+          borderColor: "background.paper",
           transition: "left 0.3s cubic-bezier(0.4,0,0.2,1), transform 0.3s",
         }}
       >
