@@ -4,7 +4,10 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
 import ProtectRoute from "./components/ProtectRoute";
 import PublicRoute from "./components/PublicRoute";
-import { Login, Teacher, Groups, SingleGroups, Student, Gifs } from "./pages/index";
+import { Login, Teacher, Groups, SingleGroups, Student, Gifs, StudentMain, MyGroups } from "./pages/index";
+import StudentLessonAll from "./components/StudentLessonAll";
+
+import StudentLessonDetail from "./components/StudentLessonDetail";
 
 // Lazy loading
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -53,6 +56,18 @@ const router = createBrowserRouter([
                 <Dashboard />
               </Suspense>
             ),
+          },
+          {
+            path: "student-main", element: <StudentMain />
+          },
+          {
+            path: "my-groups", element: <MyGroups />
+          },
+          {
+            path: "my-groups/:id", element: <StudentLessonAll />
+          },
+          {
+            path: "my-groups/:id/lessons/:lessonId", element: <StudentLessonDetail />
           },
           {
             path: "teacher", element: <Teacher />

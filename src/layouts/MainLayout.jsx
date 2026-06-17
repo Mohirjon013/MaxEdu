@@ -49,20 +49,19 @@ import {
   SendOutlined,
   Add,
   School,
+  CreditCard,
+  Groups,
+  BarChart,
+  Equalizer,
+  ShoppingCart,
+  OnlinePrediction,
 } from "@mui/icons-material";
 
 const SIDEBAR_WIDTH = 280;
 const COLLAPSED_WIDTH = 88;
 const PURPLE_MAIN = "#6B4BE8";
 
-const menuItems = [
-  { text: "Asosiy", icon: <Home />, path: "/dashboard" },
-  { text: "O'qituvchilar", icon: <Person />, path: "/dashboard/teacher" },
-  { text: "Guruhlar", icon: <Group />, path: "/dashboard/groups" },
-  { text: "Talabalar", icon: <Diamond />, path: "/dashboard/students" },
-  { text: "Sovg'alar", icon: <CardGiftcard />, path: "/dashboard/gifts" },
-  { text: "Boshqarish", icon: <Settings />, path: "/management" },
-];
+
 
 const subMenuItems = [
   { text: "Kurslar", icon: <MenuBookOutlined />, path: "/management/course" },
@@ -78,6 +77,39 @@ export default function MainLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const [managementOpen, setManagementOpen] = useState(pathname === "/management");
   const { mode, toggleTheme } = useContext(ThemeContext);
+
+  const userRole = localStorage.getItem('role');
+  
+  let currentMenuItems = [];
+
+  if (userRole === "STUDENT") {
+    currentMenuItems = [
+      { text: "Bosh sahifa", icon: <Home />, path: "/dashboard/student-main" },
+      { text: "To'lovlarim", icon: <CreditCard />, path: "/dashboard/payments" },
+      { text: "Guruhlarim", icon: <Groups />, path: "/dashboard/my-groups" },
+      { text: "Ko'rsatkichlarim", icon: <BarChart />, path: "/dashboard/stats" },
+      { text: "Reyting", icon: <Equalizer />, path: "/dashboard/rating" },
+      { text: "Do'kon", icon: <ShoppingCart />, path: "/dashboard/shop" },
+      { text: "Qo'shimcha darslar", icon: <OnlinePrediction />, path: "/dashboard/extra-lessons" },
+      { text: "Sozlamalar", icon: <Settings />, path: "/dashboard/settings" },
+    ];
+  } else if (userRole === "TEACHER") {
+    currentMenuItems = [
+      { text: "Bosh sahifa", icon: <Home />, path: "/dashboard" },
+      { text: "Guruhlarim", icon: <Group />, path: "/dashboard/groups" },
+      { text: "O'quvchilarim", icon: <Person />, path: "/dashboard/students" },
+      { text: "Dars jadvali", icon: <CalendarMonthOutlined />, path: "/dashboard/schedule" },
+    ];
+  } else {
+    currentMenuItems = [
+      { text: "Asosiy", icon: <Home />, path: "/dashboard" },
+      { text: "O'qituvchilar", icon: <Person />, path: "/dashboard/teacher" },
+      { text: "Guruhlar", icon: <Group />, path: "/dashboard/groups" },
+      { text: "Talabalar", icon: <Diamond />, path: "/dashboard/students" },
+      { text: "Sovg'alar", icon: <CardGiftcard />, path: "/dashboard/gifts" },
+      { text: "Boshqarish", icon: <Settings />, path: "/management" },
+    ];
+  }
 
   const sidebarW = collapsed ? COLLAPSED_WIDTH : SIDEBAR_WIDTH;
 
@@ -139,7 +171,7 @@ export default function MainLayout() {
         {/* Menu Items */}
         <Box sx={{ flex: 1, px: collapsed ? 2 : 1.5, display: "flex", flexDirection: "column", gap: 1 }}>
           <List disablePadding>
-            {menuItems.map((item) => {
+            {currentMenuItems.map((item) => {
               const isActive = item.path === "/dashboard"
                 ? pathname === "/dashboard"
                 : (item.path && pathname.startsWith(item.path));
@@ -204,7 +236,7 @@ export default function MainLayout() {
         </Box>
 
         {/* Subscription Card */}
-        {!collapsed && (
+        {!collapsed && userRole !== "STUDENT" && userRole !== "TEACHER" && (
           <Box sx={{ mx: 2.5, mb: 1.5, p: 1.5, borderRadius: "16px", backgroundColor: mode === 'dark' ? "rgba(220, 38, 38, 0.1)" : "#FCEDED", border: mode === 'dark' ? "1px solid rgba(220, 38, 38, 0.2)" : "1px solid #FAD4D4" }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
               {/* Bell emoji for 3D look */}

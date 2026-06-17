@@ -7,4 +7,7 @@ import Gifs from "./Gifs";
 
 import SingleGroups from "../components/SingleGroups";
 
-export {Login, Dashboard, Teacher, Groups, SingleGroups, Student, Gifs}
+import StudentMain from "./StudentMain";
+import MyGroups from "./MyGroups";
+
+export { Login, Dashboard, Teacher, Groups, SingleGroups, Student, Gifs, StudentMain, MyGroups }

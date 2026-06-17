@@ -75,7 +75,7 @@ export default function Dashboard() {
           Salom, To'ychiboyev Mohirjon!
         </Typography>
         <Typography sx={{ fontSize: 15, color: "text.secondary" }}>
-          NajotEdu platformasiga xush kelibsiz!
+          MaxEdu platformasiga xush kelibsiz!
         </Typography>
       </Box>
 

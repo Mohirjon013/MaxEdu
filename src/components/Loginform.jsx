@@ -23,11 +23,17 @@ function Loginform() {
         try {
             const res = await axiosClient.post('/auth/login', input)
             localStorage.setItem('token', res.data.accessToken)
+            localStorage.setItem('refreshToken', res.data.refreshToken)
+            localStorage.setItem('role', res.data.role)
             setOpenError(false)
             setOpen(true)
             setTimeout(() => {
                 setOpen(false)
-                navigate('/dashboard')
+                if (res.data.role === 'STUDENT') {
+                    navigate('/dashboard/student-main')
+                } else {
+                    navigate('/dashboard')
+                }
                 setInput({ phone: '', password: '' })
             }, 1000);
 
