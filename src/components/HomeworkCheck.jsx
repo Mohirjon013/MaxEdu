@@ -30,17 +30,22 @@ function HomeworkCheck() {
     async function fetchData() {
       setLoading(true);
       try {
-        // Fetch specific student's result
-        const resResult = await axiosClient.get(`/group/${id}/homework/${hwId}/result/${studentId}`);
-        const resultData = resResult.data?.data || resResult.data;
-        setResult(resultData);
-
-        // Fetch homework description
+        // Fetch homework description first to get lesson_id
         const hwResponse = await axiosClient.get(`/homework/${id}`);
         const hwData = hwResponse.data?.data || hwResponse.data || [];
         const hwList = Array.isArray(hwData) ? hwData : [];
         const currentHw = hwList.find(h => String(h.id) === String(hwId) || (h.homework && h.homework.some(hw => String(hw.id) === String(hwId))));
         setHomework(currentHw);
+
+        let lessonId = currentHw?.lesson_id || currentHw?.lesson?.id || '';
+        if (!lessonId && currentHw?.homework) {
+          lessonId = currentHw.id; // currentHw is actually the lesson object
+        }
+
+        // Fetch specific student's result using correct endpoint
+        const resResult = await axiosClient.get(`/group/${id}/lesson/${lessonId}/homework/${hwId}/student/${studentId}`);
+        const resultData = resResult.data?.data || resResult.data;
+        setResult(resultData);
 
       } catch (err) {
         console.error("Ma'lumotni yuklashda xatolik:", err);
@@ -76,7 +81,7 @@ function HomeworkCheck() {
       const payload = {
         grade: score,
         title: comment,
-        homework_answer_id: result?.id
+        homework_answer_id: Number(result?.id)
       };
 
       await axiosClient.post(`/group/${id}/homework/${hwId}/check`, payload);

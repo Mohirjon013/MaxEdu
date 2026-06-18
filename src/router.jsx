@@ -4,7 +4,7 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
 import ProtectRoute from "./components/ProtectRoute";
 import PublicRoute from "./components/PublicRoute";
-import { Login, Teacher, Groups, SingleGroups, Student, Gifs, StudentMain, MyGroups } from "./pages/index";
+import { Login, Teacher, Groups, SingleGroups, Student, Gifs, StudentMain, MyGroups, TeacherMyGroups, TeacherProfile } from "./pages/index";
 import StudentLessonAll from "./components/StudentLessonAll";
 
 import StudentLessonDetail from "./components/StudentLessonDetail";
@@ -18,6 +18,11 @@ import LessonDetail from "./components/LessonDetail";
 import HomeworkDetail from "./components/HomeworkDetail";
 import HomeworkCheck from "./components/HomeworkCheck";
 import Loader from "./components/Loader";
+
+const GroupsWrapper = () => {
+  const role = localStorage.getItem("role");
+  return role === "TEACHER" ? <TeacherMyGroups /> : <Groups />;
+};
 
 const router = createBrowserRouter([
   {
@@ -73,7 +78,10 @@ const router = createBrowserRouter([
             path: "teacher", element: <Teacher />
           },
           {
-            path: "groups", element: <Groups />
+            path: "groups", element: <GroupsWrapper />
+          },
+          {
+            path: "assembling-groups", element: <Gifs />
           },
           {
             path: "groups/:id", element: <SingleGroups />
@@ -95,6 +103,27 @@ const router = createBrowserRouter([
           },
           {
             path: "gifts", element: <Gifs />
+          },
+          {
+            path: "payments", element: <Gifs />
+          },
+          {
+            path: "stats", element: <Gifs />
+          },
+          {
+            path: "rating", element: <Gifs />
+          },
+          {
+            path: "shop", element: <Gifs />
+          },
+          {
+            path: "extra-lessons", element: <Gifs />
+          },
+          {
+            path: "settings", element: <Gifs />
+          },
+          {
+            path: "profile", element: <TeacherProfile />
           }
         ],
       },

@@ -542,7 +542,7 @@ function Groups() {
                     </TableRow>
                   ) : (
                     groups.map((group, index) => (
-                      <TableRow key={group.id ? `group-${group.id}-${index}` : index} hover onClick={() => navigate(`/dashboard/groups/${group.id}`)} sx={{ cursor: 'pointer', '& td': { borderBottom: '1px solid #eee' } }}>
+                      <TableRow key={group.id ? `group-${group.id}-${index}` : index} hover onClick={() => navigate(`/dashboard/groups/${group.id}`, { state: { groupData: group } })} sx={{ cursor: 'pointer', '& td': { borderBottom: '1px solid #eee' } }}>
                         {/* Status */}
                         <TableCell align="center">
                           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5 }}>

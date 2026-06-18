@@ -16,7 +16,7 @@ export const ThemeContextProvider = ({ children }) => {
         palette: {
           mode,
           primary: {
-            main: '#6B4BE8',
+            main: '#5a3cd9',
           },
           background: {
             default: mode === 'light' ? '#F9FAFB' : '#111827',

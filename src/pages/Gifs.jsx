@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { Box, Typography, LinearProgress, Chip, Avatar } from "@mui/material";
 import {
   CardGiftcard,
@@ -120,9 +121,18 @@ function FeatureCard({ icon, label, delay }) {
 }
 
 export default function Gifs() {
+  const { pathname } = useLocation();
   const [progress, setProgress] = useState(0);
   const [dots, setDots] = useState(".");
   const [pulse, setPulse] = useState(false);
+
+  let pageTitle = "Sovg'alar moduli";
+  if (pathname.includes("payments")) pageTitle = "To'lovlar moduli";
+  if (pathname.includes("stats")) pageTitle = "Ko'rsatkichlar moduli";
+  if (pathname.includes("rating")) pageTitle = "Reyting moduli";
+  if (pathname.includes("shop")) pageTitle = "Do'kon moduli";
+  if (pathname.includes("extra-lessons")) pageTitle = "Qo'shimcha darslar moduli";
+  if (pathname.includes("settings")) pageTitle = "Sozlamalar moduli";
 
   // Animate progress bar
   useEffect(() => {
@@ -284,7 +294,7 @@ export default function Gifs() {
               lineHeight: 1.2,
             }}
           >
-            Sovg'alar moduli
+            {pageTitle}
           </Typography>
 
           {/* Subtitle with animated dots */}

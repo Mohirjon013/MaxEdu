@@ -6,6 +6,7 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import ReportProblemOutlinedIcon from '@mui/icons-material/ReportProblemOutlined';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutlined';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
+import loginLogo from '../assets/images/login-logo.png'
 import axiosClient from '../api/axios';
 
 const StudentLessonDetail = () => {
@@ -145,17 +146,17 @@ const StudentLessonDetail = () => {
         return (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 3 }}>
                 {files.map((fileItem, idx) => (
-                    <Box 
-                        key={idx} 
+                    <Box
+                        key={idx}
                         onClick={() => window.open(getFileUrl(fileItem), '_blank')}
-                        sx={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: 1.5, 
-                            backgroundColor: '#FFFFFF', 
-                            border: '1px solid #E5E7EB', 
-                            borderRadius: '6px', 
-                            p: 1.5, 
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1.5,
+                            backgroundColor: '#FFFFFF',
+                            border: '1px solid #E5E7EB',
+                            borderRadius: '6px',
+                            p: 1.5,
                             width: 'fit-content',
                             cursor: 'pointer',
                             transition: 'all 0.2s',
@@ -174,14 +175,14 @@ const StudentLessonDetail = () => {
     };
 
     return (
-        <Box sx={{ display: 'flex', gap: 3, p: 3, height: '100vh', overflow: 'hidden', backgroundColor: '#F3F4F6' }}>
+        <Box sx={{ display: 'flex', gap: 3, p: 3, height: 'calc(100vh - 112px)', overflow: 'hidden', backgroundColor: '#F3F4F6', borderRadius: '12px' }}>
             {/* Left Content Area */}
             <Box sx={{
                 flex: 1,
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 3,
-                maxHeight: 'calc(90vh - 48px)',
+                height: '100%',
                 overflowY: 'auto',
                 pr: 1,
                 '&::-webkit-scrollbar': { width: '6px' },
@@ -189,7 +190,7 @@ const StudentLessonDetail = () => {
             }}>
 
                 {/* Video Area */}
-                <Paper elevation={0} sx={{ height: 400, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', borderRadius: '12px', overflow: 'hidden', backgroundColor: selectedVideo ? '#000' : '#fff' }}>
+                <Paper elevation={0} sx={{ height: 450, flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', borderRadius: '12px', overflow: 'hidden', backgroundColor: selectedVideo ? '#000' : '#fff' }}>
                     {selectedVideo ? (
                         <video
                             src={getFileUrl(selectedVideo.video_url)}
@@ -199,42 +200,29 @@ const StudentLessonDetail = () => {
                         />
                     ) : (
                         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                            <Box sx={{ width: 100, height: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Box sx={{
-                                    position: 'relative',
-                                    display: 'inline-block',
-                                    color: '#0EA5E9',
-                                    fontSize: '60px',
-                                    fontWeight: 800,
-                                    fontFamily: 'sans-serif'
-                                }}>
-                                    N
-                                    <Box sx={{ position: 'absolute', top: 5, right: -10, color: '#10B981', fontSize: '30px' }}>↗</Box>
-                                </Box>
-                            </Box>
-                            <Typography variant="h6" sx={{ fontWeight: 600, color: '#1E3A8A' }}>NajotEdu <span style={{ color: '#64748B', fontWeight: 400 }}>CRM</span></Typography>
+                            <img src={loginLogo} alt="img" width={200} />
                             <Typography sx={{ color: '#4B5563', fontWeight: 500, mt: 2 }}>Video mavjud emas</Typography>
                         </Box>
                     )}
                 </Paper>
 
                 {/* Homework Details Header */}
-                <Paper elevation={0} sx={{ p: 2, display: 'flex', justifyContent: 'space-between', borderRadius: '8px' }}>
-                    <Typography sx={{ fontWeight: 600, color: '#B45309', fontSize: 18 }}>Vazifalarim</Typography>
+                <Paper elevation={0} sx={{ flexShrink: 0, p: 2, display: 'flex', justifyContent: 'space-between', borderRadius: '8px' }}>
+                    <Typography sx={{ fontWeight: 600, color: '#5a3cd9', fontSize: 18 }}>Vazifalarim</Typography>
                     {(result?.grade != null || result?.score != null) && (
-                        <Typography sx={{ fontWeight: 600, color: '#B45309', fontSize: 18 }}>Ball: {result?.grade ?? result?.score}</Typography>
+                        <Typography sx={{ fontWeight: 600, color: '#5a3cd9', fontSize: 18 }}>Ball: {result?.grade ?? result?.score}</Typography>
                     )}
                 </Paper>
 
                 {/* Homework Details Sections */}
                 {homeworkLoading ? (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                        <CircularProgress sx={{ color: '#B45309' }} />
+                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 4, flexShrink: 0 }}>
+                        <CircularProgress sx={{ color: '#5a3cd9' }} />
                     </Box>
                 ) : (
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, flexShrink: 0 }}>
                         {homework && (
-                            <Paper elevation={0} sx={{ p: 3, borderRadius: '8px', backgroundColor: '#FDFBF9' }}>
+                            <Paper elevation={0} sx={{ p: 3, borderRadius: '8px', backgroundColor: '#ffffff' }}>
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                                     <Typography sx={{ fontWeight: 600, color: '#111827', fontSize: 16 }}>Uyga vazifa</Typography>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -258,7 +246,7 @@ const StudentLessonDetail = () => {
                         )}
 
                         {answer && (
-                            <Paper elevation={0} sx={{ p: 3, borderRadius: '8px', backgroundColor: '#FDFBF9' }}>
+                            <Paper elevation={0} sx={{ p: 3, borderRadius: '8px', backgroundColor: '#ffffff' }}>
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                                     <Typography sx={{ fontWeight: 600, color: '#111827', fontSize: 16 }}>Mening jo'natmalarim</Typography>
                                     {answer.file != null && (
@@ -274,7 +262,7 @@ const StudentLessonDetail = () => {
                         )}
 
                         {result && (
-                            <Paper elevation={0} sx={{ p: 3, borderRadius: '8px', backgroundColor: '#FDFBF9' }}>
+                            <Paper elevation={0} sx={{ p: 3, borderRadius: '8px', backgroundColor: '#ffffff' }}>
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                                     <Typography sx={{ fontWeight: 600, color: '#111827', fontSize: 16 }}>O'qituvchi izohi</Typography>
                                     {resultMeta && (
@@ -293,7 +281,7 @@ const StudentLessonDetail = () => {
                         )}
 
                         {!homeworkLoading && !homework && !answer && !result && (
-                            <Paper elevation={0} sx={{ p: 4, borderRadius: '8px', backgroundColor: '#FDFBF9', textAlign: 'center' }}>
+                            <Paper elevation={0} sx={{ p: 4, borderRadius: '8px', backgroundColor: '#FAFAFA', textAlign: 'center' }}>
                                 <Typography sx={{ color: '#9CA3AF', fontSize: 15 }}>
                                     Bu dars uchun vazifa mavjud emas
                                 </Typography>
@@ -310,8 +298,7 @@ const StudentLessonDetail = () => {
                 p: 2,
                 borderRadius: '12px',
                 backgroundColor: '#F8FAFC',
-                alignSelf: 'flex-start',
-                maxHeight: 'calc(90vh - 48px)',
+                height: '100%',
                 overflowY: 'auto',
                 border: '1px solid #E2E8F0',
                 '&::-webkit-scrollbar': { width: '6px' },
@@ -319,7 +306,7 @@ const StudentLessonDetail = () => {
             }}>
                 {loading ? (
                     <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
-                        <CircularProgress sx={{ color: '#B45309' }} />
+                        <CircularProgress sx={{ color: '#5a3cd9' }} />
                     </Box>
                 ) : lessons.length === 0 ? (
                     <Typography sx={{ textAlign: 'center', color: '#6B7280', py: 3 }}>Darslar topilmadi</Typography>
@@ -337,29 +324,31 @@ const StudentLessonDetail = () => {
                                         sx={{
                                             p: 2,
                                             borderRadius: '8px',
-                                            backgroundColor: isActive ? '#EACDAB' : '#F6EFE9',
+                                            backgroundColor: isActive ? '#7960daff' : '#F5F3FF',
                                             cursor: 'pointer',
                                             display: 'flex',
                                             justifyContent: 'space-between',
                                             alignItems: 'center',
                                             transition: 'all 0.2s',
                                             '&:hover': {
-                                                backgroundColor: isActive ? '#EACDAB' : '#EAE3DD'
+                                                backgroundColor: isActive ? '#6B52D4' : '#EDE9FE',
+                                                boxShadow: '0 2px 8px rgba(107, 75, 232, 0.15)',
+                                                transform: 'translateY(-1px)'
                                             }
                                         }}
                                     >
                                         <Box>
-                                            <Typography sx={{ fontWeight: 600, color: '#111827', fontSize: 16, mb: 0.5 }}>
+                                            <Typography sx={{ fontWeight: 600, color: isActive ? '#fff' : '#111827', fontSize: 16, mb: 0.5 }}>
                                                 {lesson.topic}
                                             </Typography>
-                                            <Typography sx={{ color: '#4B5563', fontSize: 13 }}>
+                                            <Typography sx={{ color: isActive ? 'rgba(255,255,255,0.8)' : '#4B5563', fontSize: 13 }}>
                                                 Dars sanasi: {formatDateCustom(lesson.created_at)}
                                             </Typography>
                                         </Box>
 
                                         {/* Accordion icon logic */}
                                         {hasVideo && (
-                                            isActive ? <KeyboardArrowUpIcon sx={{ color: '#4B5563' }} /> : <KeyboardArrowDownIcon sx={{ color: '#6B7280' }} />
+                                            isActive ? <KeyboardArrowUpIcon sx={{ color: '#fff' }} /> : <KeyboardArrowDownIcon sx={{ color: '#6B7280' }} />
                                         )}
                                     </Box>
 
@@ -380,16 +369,16 @@ const StudentLessonDetail = () => {
                                                             sx={{
                                                                 p: 2,
                                                                 borderRadius: '8px',
-                                                                backgroundColor: isSelectedVideo ? '#D9A05B' : '#EACDAB',
+                                                                backgroundColor: isSelectedVideo ? '#6B4BE8' : '#EDE9FE',
                                                                 display: 'flex',
                                                                 alignItems: 'center',
                                                                 gap: 1.5,
                                                                 cursor: 'pointer',
                                                                 transition: 'all 0.2s',
-                                                                '&:hover': { backgroundColor: isSelectedVideo ? '#D9A05B' : '#E3C19C' }
+                                                                '&:hover': { backgroundColor: isSelectedVideo ? '#5B3DD8' : '#DDD6FE' }
                                                             }}
                                                         >
-                                                            <PlayCircleOutlineIcon sx={{ color: isSelectedVideo ? '#fff' : '#854D0E', fontSize: 28 }} />
+                                                            <PlayCircleOutlineIcon sx={{ color: isSelectedVideo ? '#fff' : '#6B4BE8', fontSize: 28 }} />
                                                             <Typography sx={{ color: isSelectedVideo ? '#fff' : '#111827', fontSize: 15, fontWeight: 500 }}>
                                                                 {idx + 1}-video: {video.originalname || video.original_name || video.video_url}
                                                             </Typography>

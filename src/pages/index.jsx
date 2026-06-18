@@ -10,4 +10,7 @@ import SingleGroups from "../components/SingleGroups";
 import StudentMain from "./StudentMain";
 import MyGroups from "./MyGroups";
 
-export { Login, Dashboard, Teacher, Groups, SingleGroups, Student, Gifs, StudentMain, MyGroups }
+import TeacherMyGroups from "./TeacherMyGroups";
+import TeacherProfile from "./TeacherProfile";
+
+export { Login, Dashboard, Teacher, Groups, SingleGroups, Student, Gifs, StudentMain, MyGroups, TeacherMyGroups, TeacherProfile }

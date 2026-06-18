@@ -16,6 +16,8 @@ import {
   Avatar,
   Paper,
   Tooltip,
+  Collapse,
+  Popover,
 } from "@mui/material";
 import {
   Home,
@@ -77,9 +79,26 @@ export default function MainLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const [managementOpen, setManagementOpen] = useState(pathname === "/management");
   const { mode, toggleTheme } = useContext(ThemeContext);
+  const [openMenus, setOpenMenus] = useState({ "Guruhlar": true });
+  const [profileAnchor, setProfileAnchor] = useState(null);
+
+  const handleProfileOpen = (e) => setProfileAnchor(e.currentTarget);
+  const handleProfileClose = () => setProfileAnchor(null);
+  const profileOpen = Boolean(profileAnchor);
+
+  const toggleMenu = (menuText) => {
+    setOpenMenus((prev) => ({ ...prev, [menuText]: !prev[menuText] }));
+  };
 
   const userRole = localStorage.getItem('role');
-  
+
+  const ROLE_LABELS = {
+    SUPERADMIN: 'SUPERADMIN',
+    TEACHER: "TEACHER",
+    STUDENT: "STUDENT",
+  };
+  const roleLabel = ROLE_LABELS[userRole] || userRole;
+
   let currentMenuItems = [];
 
   if (userRole === "STUDENT") {
@@ -95,10 +114,15 @@ export default function MainLayout() {
     ];
   } else if (userRole === "TEACHER") {
     currentMenuItems = [
-      { text: "Bosh sahifa", icon: <Home />, path: "/dashboard" },
-      { text: "Guruhlarim", icon: <Group />, path: "/dashboard/groups" },
-      { text: "O'quvchilarim", icon: <Person />, path: "/dashboard/students" },
-      { text: "Dars jadvali", icon: <CalendarMonthOutlined />, path: "/dashboard/schedule" },
+      {
+        text: "Guruhlar",
+        icon: <Groups />,
+        subItems: [
+          { text: "Guruhlar", path: "/dashboard/groups" },
+          { text: "Yig'ilayotgan guruhlar", path: "/dashboard/assembling-groups" },
+        ]
+      },
+      { text: "Profil", icon: <Person />, path: "/dashboard/profile" },
     ];
   } else {
     currentMenuItems = [
@@ -172,64 +196,113 @@ export default function MainLayout() {
         <Box sx={{ flex: 1, px: collapsed ? 2 : 1.5, display: "flex", flexDirection: "column", gap: 1 }}>
           <List disablePadding>
             {currentMenuItems.map((item) => {
-              const isActive = item.path === "/dashboard"
+              const hasSubItems = item.subItems && item.subItems.length > 0;
+              const isActive = !hasSubItems && (item.path === "/dashboard"
                 ? pathname === "/dashboard"
-                : (item.path && pathname.startsWith(item.path));
+                : (item.path && pathname.startsWith(item.path)));
+
               return (
-                <ListItem key={item.text} disablePadding sx={{ mb: 1, justifyContent: "center" }}>
-                  <Tooltip title={collapsed ? item.text : ""} placement="right" arrow>
-                    <ListItemButton
-                      onClick={() => handleMenuClick(item)}
-                      sx={{
-                        minHeight: 47,
-                        width: "100%",
-                        justifyContent: collapsed ? "center" : "flex-start",
-                        px: collapsed ? 0 : 2,
-                        py: 1,
-                        borderRadius: "14px",
-                        backgroundColor: isActive ? PURPLE_MAIN : "transparent",
-                        color: isActive ? "#FFF" : "text.secondary",
-                        "&:hover": {
-                          backgroundColor: isActive ? PURPLE_MAIN : (mode === 'dark' ? "rgba(107, 75, 232, 0.15)" : "#F3E8FF"), // Light purple background
-                        },
-                        "&:hover .menu-icon": {
-                          color: isActive ? "#FFF" : PURPLE_MAIN,
-                        },
-                        "&:hover .menu-text": {
-                          color: isActive ? "#FFF" : PURPLE_MAIN,
-                        },
-                        transition: "all 0.3s ease",
-                      }}
-                    >
-                      <ListItemIcon
-                        className="menu-icon"
+                <React.Fragment key={item.text}>
+                  <ListItem disablePadding sx={{ mb: hasSubItems && openMenus[item.text] ? 0.5 : 1, justifyContent: "center" }}>
+                    <Tooltip title={collapsed ? item.text : ""} placement="right" arrow>
+                      <ListItemButton
+                        onClick={() => hasSubItems ? toggleMenu(item.text) : handleMenuClick(item)}
                         sx={{
-                          minWidth: 0,
-                          mr: collapsed ? 0 : 2.5,
-                          justifyContent: "center",
+                          minHeight: 47,
+                          width: "100%",
+                          justifyContent: collapsed ? "center" : "flex-start",
+                          px: collapsed ? 0 : 2,
+                          py: 1,
+                          borderRadius: "14px",
+                          backgroundColor: isActive ? PURPLE_MAIN : "transparent",
                           color: isActive ? "#FFF" : "text.secondary",
-                          transition: "color 0.3s ease",
+                          "&:hover": {
+                            backgroundColor: isActive ? PURPLE_MAIN : (mode === 'dark' ? "rgba(107, 75, 232, 0.15)" : "#F3E8FF"),
+                          },
+                          "&:hover .menu-icon": {
+                            color: isActive ? "#FFF" : PURPLE_MAIN,
+                          },
+                          "&:hover .menu-text": {
+                            color: isActive ? "#FFF" : PURPLE_MAIN,
+                          },
+                          transition: "all 0.3s ease",
                         }}
                       >
-                        {React.cloneElement(item.icon, { sx: { fontSize: 24 } })}
-                      </ListItemIcon>
-                      {!collapsed && (
-                        <Typography
-                          className="menu-text"
+                        <ListItemIcon
+                          className="menu-icon"
                           sx={{
-                            fontSize: 15,
-                            fontWeight: isActive ? 600 : 500,
-                            color: isActive ? "#FFF" : "text.primary",
-                            flex: 1,
+                            minWidth: 0,
+                            mr: collapsed ? 0 : 2.5,
+                            justifyContent: "center",
+                            color: isActive ? "#FFF" : "text.secondary",
                             transition: "color 0.3s ease",
                           }}
                         >
-                          {item.text}
-                        </Typography>
-                      )}
-                    </ListItemButton>
-                  </Tooltip>
-                </ListItem>
+                          {React.cloneElement(item.icon, { sx: { fontSize: 24 } })}
+                        </ListItemIcon>
+                        {!collapsed && (
+                          <>
+                            <Typography
+                              className="menu-text"
+                              sx={{
+                                fontSize: 15,
+                                fontWeight: isActive ? 600 : 500,
+                                color: isActive ? "#FFF" : "text.primary",
+                                flex: 1,
+                                transition: "color 0.3s ease",
+                              }}
+                            >
+                              {item.text}
+                            </Typography>
+                            {hasSubItems && (
+                              <KeyboardArrowDown
+                                sx={{
+                                  color: "text.secondary",
+                                  transform: openMenus[item.text] ? "rotate(180deg)" : "rotate(0deg)",
+                                  transition: "transform 0.3s"
+                                }}
+                              />
+                            )}
+                          </>
+                        )}
+                      </ListItemButton>
+                    </Tooltip>
+                  </ListItem>
+
+                  {/* SUB ITEMS */}
+                  {hasSubItems && !collapsed && (
+                    <Collapse in={openMenus[item.text]} timeout="auto" unmountOnExit>
+                      <List component="div" disablePadding>
+                        {item.subItems.map((subItem) => {
+                          const isSubActive = pathname === subItem.path || pathname.startsWith(subItem.path + '/');
+                          return (
+                            <ListItem key={subItem.text} disablePadding sx={{ mb: 1, px: 2 }}>
+                              <ListItemButton
+                                onClick={() => handleMenuClick(subItem)}
+                                sx={{
+                                  minHeight: 45,
+                                  width: "100%",
+                                  borderRadius: "14px",
+                                  backgroundColor: isSubActive ? PURPLE_MAIN : "transparent",
+                                  color: isSubActive ? "#FFF" : "text.secondary",
+                                  "&:hover": {
+                                    backgroundColor: isSubActive ? PURPLE_MAIN : (mode === 'dark' ? "rgba(107, 75, 232, 0.15)" : "#F3E8FF"),
+                                    color: isSubActive ? "#FFF" : PURPLE_MAIN,
+                                  },
+                                  transition: "all 0.3s ease",
+                                }}
+                              >
+                                <Typography sx={{ fontSize: 14, fontWeight: isSubActive ? 600 : 500, flex: 1, pl: 1 }}>
+                                  {subItem.text}
+                                </Typography>
+                              </ListItemButton>
+                            </ListItem>
+                          );
+                        })}
+                      </List>
+                    </Collapse>
+                  )}
+                </React.Fragment>
               );
             })}
           </List>
@@ -271,36 +344,7 @@ export default function MainLayout() {
           </Box>
         )}
 
-        {/* Logout */}
-        <Box sx={{ px: collapsed ? 2 : 3, mb: 1.5 }}>
-          <Tooltip title={collapsed ? "Chiqish" : ""} placement="right" arrow>
-            <ListItemButton
-              onClick={() => {
-                localStorage.removeItem("token");
-                navigate("/login");
-              }}
-              sx={{
-                minHeight: 52,
-                width: "100%",
-                justifyContent: collapsed ? "center" : "flex-start",
-                px: collapsed ? 0 : 2.5,
-                borderRadius: "14px",
-                color: "text.secondary",
-                "&:hover": { backgroundColor: mode === 'dark' ? "rgba(239, 68, 68, 0.15)" : "#FEF2F2", color: "#EF4444" },
-                transition: "all 0.3s ease",
-              }}
-            >
-              <ListItemIcon sx={{ minWidth: 0, mr: collapsed ? 0 : 2.5, justifyContent: "center", color: "inherit" }}>
-                <LogoutOutlined sx={{ fontSize: 24 }} />
-              </ListItemIcon>
-              {!collapsed && (
-                <Typography sx={{ fontSize: 15, fontWeight: 500, flex: 1 }}>
-                  Chiqish
-                </Typography>
-              )}
-            </ListItemButton>
-          </Tooltip>
-        </Box>
+        {/* Logout removed — moved to Avatar dropdown */}
       </Drawer>
 
       {/* ════ COLLAPSE BUTTON - PLACED OUTSIDE DRAWER TO PREVENT SCROLLBAR ════ */}
@@ -458,9 +502,88 @@ export default function MainLayout() {
             <IconButton onClick={toggleTheme} sx={{ color: "text.secondary" }}>
               {mode === 'dark' ? <LightModeOutlined sx={{ fontSize: 22 }} /> : <DarkModeOutlined sx={{ fontSize: 22 }} />}
             </IconButton>
-            <Avatar sx={{ width: 36, height: 36, backgroundColor: PURPLE_MAIN, fontSize: 16, fontWeight: 700, cursor: "pointer", ml: 1 }}>
-              A
-            </Avatar>
+            <Tooltip title="" placement="bottom" arrow>
+              <Avatar
+                onClick={handleProfileOpen}
+                sx={{
+                  width: 36, height: 36, backgroundColor: PURPLE_MAIN, fontSize: 16, fontWeight: 700,
+                  cursor: "pointer", ml: 1,
+                  transition: "transform 0.2s, box-shadow 0.2s",
+                  "&:hover": { transform: "scale(1.1)", boxShadow: "0 4px 14px rgba(107,75,232,0.4)" }
+                }}
+              >
+                {(userRole || 'U').charAt(0).toUpperCase()}
+              </Avatar>
+            </Tooltip>
+
+            {/* Profile Popover */}
+            <Popover
+              open={profileOpen}
+              anchorEl={profileAnchor}
+              onClose={handleProfileClose}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+              transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+              PaperProps={{
+                sx: {
+                  mt: 0.5,
+                  borderRadius: '12px',
+                  width: 200,          // fixed width
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+                  border: '0.5px solid',
+                  borderColor: 'divider',
+                  overflow: 'hidden',
+                  backgroundColor: 'background.paper',
+                  p: 0,
+                }
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 1.75, py: 1.25 }}>
+                <Box sx={{ width: 36, height: 36, flexShrink: 0 }}>  {/* wrapper — Avatar stretch oldini oladi */}
+                  <Avatar sx={{
+                    width: 36, height: 36,
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(107,75,232,0.15)',
+                    color: '#7C3AED',
+                    fontSize: 14,
+                    fontWeight: 700,
+                  }}>
+                    {(userRole || 'U').charAt(0).toUpperCase()}
+                  </Avatar>
+                </Box>
+                <Typography sx={{
+                  fontWeight: 700,
+                  fontSize: 13,
+                  color: 'text.primary',
+                  letterSpacing: '0.6px',
+                  textTransform: 'uppercase',
+                }}>
+                  {roleLabel}
+                </Typography>
+              </Box>
+
+              <Box sx={{ height: '0.5px', backgroundColor: 'divider' }} />
+
+              <Box
+                onClick={() => {
+                  handleProfileClose();
+                  localStorage.clear();
+                  navigate('/login');
+                }}
+                sx={{
+                  display: 'flex', alignItems: 'center', gap: 1.25,
+                  px: 1.75, py: 1.25,
+                  cursor: 'pointer',
+                  '&:hover': {
+                    backgroundColor: mode === 'dark' ? 'rgba(239,68,68,0.08)' : '#FEF2F2'
+                  }
+                }}
+              >
+                <LogoutOutlined sx={{ fontSize: 17, color: '#EF4444' }} />
+                <Typography sx={{ fontWeight: 600, fontSize: 13, color: '#EF4444' }}>
+                  Chiqish
+                </Typography>
+              </Box>
+            </Popover>
           </Box>
         </Box>
 

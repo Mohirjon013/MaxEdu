@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Typography,
@@ -67,6 +68,17 @@ function CustomAccordion({ title }) {
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    const role = localStorage.getItem('role');
+    if (role === 'TEACHER') {
+      navigate('/dashboard/teacher-groups');
+    } else if (role === 'STUDENT') {
+      navigate('/dashboard/student-main');
+    }
+  }, [navigate]);
+
   return (
     <Box sx={{ pt: 1 }}>
       {/* Greeting */}

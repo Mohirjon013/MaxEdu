@@ -31,6 +31,8 @@ function Loginform() {
                 setOpen(false)
                 if (res.data.role === 'STUDENT') {
                     navigate('/dashboard/student-main')
+                } else if (res.data.role === 'TEACHER') {
+                    navigate('/dashboard/groups')
                 } else {
                     navigate('/dashboard')
                 }

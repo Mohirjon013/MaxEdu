@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { Box, Typography, Button, IconButton, Chip, Tabs, Tab, Paper, Avatar, Collapse } from '@mui/material';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import BarChartIcon from '@mui/icons-material/BarChart';
@@ -30,7 +30,8 @@ function SingleGroups() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [group, setGroup] = useState(null);
+  const location = useLocation();
+  const [group, setGroup] = useState(location.state?.groupData || null);
 
   const tabParam = parseInt(searchParams.get('tab') || '0', 10);
   const activeTab = isNaN(tabParam) ? 0 : tabParam;
@@ -46,10 +47,10 @@ function SingleGroups() {
 
   useEffect(() => {
     async function fetchGroup() {
+      if (group) return; // Optimallashtirish: agar ma'lumot allaqachon bo'lsa, keraksiz so'rov yubormaslik
       try {
         const res = await axiosClient.get(`/groups/one/${id}`);
-
-        const rawData = res.data.data || res.data;
+        const rawData = res.data?.data || res.data;
         const actualGroup = Array.isArray(rawData) ? rawData[0] : (rawData.group || rawData);
         setGroup(actualGroup);
       } catch (error) {
@@ -124,17 +125,22 @@ function SingleGroups() {
                 </IconButton>
               </Box>
               <Collapse in={isMentorsOpen} timeout="auto" unmountOnExit>
-                <Box sx={{ p: 3, display: 'flex', gap: 3 }}>
-                  {group.teachers?.map((teacher, idx) => (
-                    <Box key={idx} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      <Avatar src={teacher.photo || teacher.avatar || teacher.image ? `https://najot-edu.softwareengineer.uz/files/${teacher.photo || teacher.avatar || teacher.image}` : ''} sx={{ width: 64, height: 64, mb: 1, border: '2px solid #e5e7eb' }}>
-                        {!(teacher.photo || teacher.avatar || teacher.image) && teacher.full_name?.charAt(0)}
-                      </Avatar>
-                      <Typography sx={{ fontSize: '12px', color: '#10b981', fontWeight: 600, mb: 0.5 }}>Teacher</Typography>
-                      <Typography sx={{ fontSize: '14px', fontWeight: 700, color: '#111827' }}>{teacher.full_name}</Typography>
-                    </Box>
-                  ))}
-                  {(!group.teachers || group.teachers.length === 0) && (
+                <Box sx={{ p: 3, display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+                  {(group.teachers?.length > 0 ? group.teachers : (group.teacher ? [group.teacher] : [])).map((teacher, idx) => {
+                    const photoPath = teacher.photo || teacher.avatar || teacher.image;
+                    const imgSrc = photoPath ? (photoPath.startsWith('http') ? photoPath : `https://najot-edu.softwareengineer.uz/files/${photoPath}`) : '';
+
+                    return (
+                      <Box key={idx} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <Avatar src={imgSrc} sx={{ width: 64, height: 64, mb: 1, border: '2px solid #e5e7eb' }}>
+                          {(teacher.full_name || 'T').charAt(0).toUpperCase()}
+                        </Avatar>
+                        <Typography sx={{ fontSize: '12px', color: '#10b981', fontWeight: 600, mb: 0.5 }}>Teacher</Typography>
+                        <Typography sx={{ fontSize: '14px', fontWeight: 700, color: '#111827' }}>{teacher.full_name || 'Ism kiritilmagan'}</Typography>
+                      </Box>
+                    );
+                  })}
+                  {(!group.teachers || group.teachers.length === 0) && !group.teacher && (
                     <Typography sx={{ color: '#6b7280', fontSize: '14px' }}>Mentor biriktirilmagan</Typography>
                   )}
                 </Box>
