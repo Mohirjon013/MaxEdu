@@ -157,13 +157,10 @@ function Loginform() {
             <form onSubmit={loginUser} style={{ width: "100%", display: "flex", flexDirection: "column", gap: "clamp(10px, 1.5vh, 14px)" }}>
                 {/* Login maydoni */}
                 <div>
-                    <label style={{ display: "block", fontSize: "clamp(12px, 1.2vw, 13px)", color: "#333", marginBottom: 5, fontWeight: 400 }}>
-                        Login
-                    </label>
                     <input
                         type="text"
                         name="phone"
-                        placeholder="Loginni kiriting"
+                        placeholder="Login"
                         value={input.phone}
                         onChange={getInfoInput}
                         className="placeholder:text-[#aaa] w-full outline-none"
@@ -189,14 +186,11 @@ function Loginform() {
 
                 {/* Parol maydoni */}
                 <div>
-                    <label style={{ display: "block", fontSize: "clamp(12px, 1.2vw, 13px)", color: "#333", marginBottom: 5, fontWeight: 400 }}>
-                        Parol
-                    </label>
                     <div style={{ position: "relative" }}>
                         <input
                             type={showPassword ? "text" : "password"}
                             name="password"
-                            placeholder="Parolni kiriting"
+                            placeholder="Parol"
                             value={input.password}
                             onChange={getInfoInput}
                             className="placeholder:text-[#aaa] w-full outline-none"

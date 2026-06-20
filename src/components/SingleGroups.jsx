@@ -53,7 +53,21 @@ function SingleGroups() {
         const res = await axiosClient.get(endpoint);
         const rawData = res.data?.data || res.data;
         const actualGroup = Array.isArray(rawData) ? rawData[0] : (rawData.group || rawData);
-        setGroup((prev) => ({ ...prev, ...actualGroup }));
+        setGroup((prev) => {
+          if (!prev) return actualGroup;
+          return {
+            ...prev,
+            ...actualGroup,
+            start_time: actualGroup.start_time || prev.start_time,
+            end_time: actualGroup.end_time || prev.end_time,
+            room: actualGroup.room || prev.room,
+            week_day: (actualGroup.week_day && actualGroup.week_day.length > 0) ? actualGroup.week_day : prev.week_day,
+            teachers: (actualGroup.teachers && actualGroup.teachers.length > 0) ? actualGroup.teachers : prev.teachers,
+            teacher: actualGroup.teacher || prev.teacher,
+            start_date: actualGroup.start_date || prev.start_date,
+            end_date: actualGroup.end_date || prev.end_date
+          };
+        });
       } catch (error) {
         console.error(error);
       }
@@ -198,29 +212,35 @@ function SingleGroups() {
             </Box>
             <Box sx={{ p: 3, pt: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
               {/* Rows — har bir teacher uchun alohida qator */}
-              {group.teachers?.length > 0 ? group.teachers.map((teacher, tIdx) => (
-                <Box key={tIdx} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, bgcolor: '#f8fafc', borderRadius: '8px' }}>
-                  <Typography sx={{ color: '#2563eb', fontWeight: 600, fontSize: '14px', flex: 1 }}>
-                    {teacher.full_name}
-                  </Typography>
-                  <Typography sx={{ color: '#475569', fontSize: '14px', flex: 1, textAlign: 'center' }}>
-                    {group.week_day?.map(d => ({ MONDAY: 'Du', TUESDAY: 'Se', WEDNESDAY: 'Ch', THURSDAY: 'Pa', FRIDAY: 'Ju', SATURDAY: 'Sh', SUNDAY: 'Yak' }[d])).join('/') || '—'}
-                  </Typography>
-                  <Typography sx={{ color: '#475569', fontSize: '14px', flex: 1, textAlign: 'center' }}>
-                    {(group.start_time || '').slice(0, 5)} dan - {group.end_time ? group.end_time.slice(0, 5) : '12:30'} gacha
-                  </Typography>
-                  <Typography sx={{ color: '#475569', fontSize: '14px', flex: 1, textAlign: 'center' }}>
-                    {group.start_date ? formatDate(group.start_date) : '15 Yan, 2026'} - {group.end_date ? formatDate(group.end_date) : '27 Iyun, 2026'}
-                  </Typography>
-                  <Typography sx={{ color: '#475569', fontSize: '14px', flex: 1, textAlign: 'right' }}>
-                    {group.room}
-                  </Typography>
-                </Box>
-              )) : (
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, bgcolor: '#f8fafc', borderRadius: '8px' }}>
-                  <Typography sx={{ color: '#6b7280', fontSize: '14px', flex: 1 }}>O'qituvchi yo'q</Typography>
-                </Box>
-              )}
+              {(() => {
+                const displayTeachers = group.teachers?.length > 0 ? group.teachers : (group.teacher ? [group.teacher] : []);
+                if (displayTeachers.length > 0) {
+                  return displayTeachers.map((teacher, tIdx) => (
+                    <Box key={tIdx} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, bgcolor: '#f8fafc', borderRadius: '8px' }}>
+                      <Typography sx={{ color: '#2563eb', fontWeight: 600, fontSize: '14px', flex: 1 }}>
+                        {teacher.full_name}
+                      </Typography>
+                      <Typography sx={{ color: '#475569', fontSize: '14px', flex: 1, textAlign: 'center' }}>
+                        {group.week_day?.map(d => ({ MONDAY: 'Du', TUESDAY: 'Se', WEDNESDAY: 'Ch', THURSDAY: 'Pa', FRIDAY: 'Ju', SATURDAY: 'Sh', SUNDAY: 'Yak' }[d])).join('/') || '—'}
+                      </Typography>
+                      <Typography sx={{ color: '#475569', fontSize: '14px', flex: 1, textAlign: 'center' }}>
+                        {(group.start_time || '').slice(0, 5)} dan - {group.end_time ? group.end_time.slice(0, 5) : '12:30'} gacha
+                      </Typography>
+                      <Typography sx={{ color: '#475569', fontSize: '14px', flex: 1, textAlign: 'center' }}>
+                        {group.start_date ? formatDate(group.start_date) : '15 Yan, 2026'} - {group.end_date ? formatDate(group.end_date) : '27 Iyun, 2026'}
+                      </Typography>
+                      <Typography sx={{ color: '#475569', fontSize: '14px', flex: 1, textAlign: 'right' }}>
+                        {group.room?.name || group.room || '—'}
+                      </Typography>
+                    </Box>
+                  ));
+                }
+                return (
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, bgcolor: '#f8fafc', borderRadius: '8px' }}>
+                    <Typography sx={{ color: '#6b7280', fontSize: '14px', flex: 1 }}>O'qituvchi yo'q</Typography>
+                  </Box>
+                );
+              })()}
 
               <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
                 <Button variant="outlined" sx={{ color: '#475569', borderColor: '#e2e8f0', borderRadius: '8px', textTransform: 'none', px: 3, py: 0.5, fontWeight: 500 }}>

@@ -45,54 +45,26 @@ export default function Login() {
           className="flex-1 flex flex-col items-center justify-center w-full"
           style={{ maxWidth: 380 }}
         >
-          {/* Universite nomi */}
-          <p
-            style={{
-              textAlign: "center",
-              fontSize: 12,
-              fontWeight: 600,
-              color: "#444",
-              textTransform: "uppercase",
-              letterSpacing: "0.5px",
-              marginBottom: 10,
-              lineHeight: 1.7,
-            }}
-          >
-            Where Education Meets Efficiency
-          </p>
-
           {/* Logo */}
           <img
             src={logoImg}
-            alt="maxEdu Logo"
+            alt="MaxEdu Logo"
             style={{
-              width: "min(400px, 55%)",
+              width: "min(500px, 90%)",
               height: "auto",
               objectFit: "contain",
-              marginBottom: 14,
+              marginBottom: 40,
             }}
           />
-
-          {/* Sarlavha */}
-          <h1
-            style={{
-              fontSize: 14,
-              fontWeight: 700,
-              letterSpacing: "2px",
-              color: "#111",
-              textAlign: "center",
-              marginBottom: 22,
-              textTransform: "uppercase",
-            }}
-          >
-            Your School's Operating System.
-          </h1>
 
           {/* Forma */}
           <Loginform />
         </div>
 
-
+        {/* Footer */}
+        <div style={{ color: '#9CA3AF', fontSize: '13px', textAlign: 'center', paddingBottom: '10px', marginTop: 'auto', fontWeight: 500 }}>
+          Copyright © 2026 MaxEdu CRM
+        </div>
       </div>
 
       {/* MUI — faqat notification uchun */}

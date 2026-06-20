@@ -185,9 +185,11 @@ const StudentLessonDetail = () => {
                             style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                         />
                     ) : (
-                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                            <img src={loginLogo} alt="img" width={200} />
-                            <Typography sx={{ color: '#4B5563', fontWeight: 500, mt: 2 }}>Video mavjud emas</Typography>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                            <img src={loginLogo} alt="MaxEdu Logo" style={{ width: "min(350px, 65%)", height: "auto", objectFit: "contain", marginBottom: '8px' }} />
+                            <Typography sx={{ color: '#575b63ff', fontSize: '18px', fontWeight: 600, letterSpacing: '0.5px' }}>
+                                Video mavjud emas
+                            </Typography>
                         </Box>
                     )}
                 </Paper>
