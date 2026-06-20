@@ -80,11 +80,10 @@ export default function MainLayout() {
   const [managementOpen, setManagementOpen] = useState(pathname === "/management");
   const { mode, toggleTheme } = useContext(ThemeContext);
   const [openMenus, setOpenMenus] = useState({ "Guruhlar": true });
-  const [profileAnchor, setProfileAnchor] = useState(null);
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
 
-  const handleProfileOpen = (e) => setProfileAnchor(e.currentTarget);
-  const handleProfileClose = () => setProfileAnchor(null);
-  const profileOpen = Boolean(profileAnchor);
+  const toggleProfileDropdown = () => setIsProfileDropdownOpen((prev) => !prev);
+  const closeProfileDropdown = () => setIsProfileDropdownOpen(false);
 
   const toggleMenu = (menuText) => {
     setOpenMenus((prev) => ({ ...prev, [menuText]: !prev[menuText] }));
@@ -149,6 +148,14 @@ export default function MainLayout() {
 
   return (
     <Box sx={{ display: "flex", height: "100vh", backgroundColor: "background.default", overflow: "hidden", fontFamily: "Roboto, sans-serif", position: "relative" }}>
+      <style>
+        {`
+          @keyframes customFadeInDown {
+            from { opacity: 0; transform: scale(0.95) translateY(-10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+          }
+        `}
+      </style>
 
       {/* ════ SIDEBAR ════ */}
       <Drawer
@@ -502,88 +509,91 @@ export default function MainLayout() {
             <IconButton onClick={toggleTheme} sx={{ color: "text.secondary" }}>
               {mode === 'dark' ? <LightModeOutlined sx={{ fontSize: 22 }} /> : <DarkModeOutlined sx={{ fontSize: 22 }} />}
             </IconButton>
-            <Tooltip title="" placement="bottom" arrow>
-              <Avatar
-                onClick={handleProfileOpen}
-                sx={{
-                  width: 36, height: 36, backgroundColor: PURPLE_MAIN, fontSize: 16, fontWeight: 700,
-                  cursor: "pointer", ml: 1,
-                  transition: "transform 0.2s, box-shadow 0.2s",
-                  "&:hover": { transform: "scale(1.1)", boxShadow: "0 4px 14px rgba(107,75,232,0.4)" }
-                }}
-              >
-                {(userRole || 'U').charAt(0).toUpperCase()}
-              </Avatar>
-            </Tooltip>
+            <Box sx={{ position: 'relative' }}>
+              <Tooltip title="" placement="bottom" arrow>
+                <Avatar
+                  onClick={toggleProfileDropdown}
+                  sx={{
+                    width: 36, height: 36, backgroundColor: PURPLE_MAIN, fontSize: 16, fontWeight: 700,
+                    cursor: "pointer", ml: 1,
+                    transition: "transform 0.2s, box-shadow 0.2s",
+                    "&:hover": { transform: "scale(1.1)", boxShadow: "0 4px 14px rgba(107,75,232,0.4)" }
+                  }}
+                >
+                  {(userRole || 'U').charAt(0).toUpperCase()}
+                </Avatar>
+              </Tooltip>
 
-            {/* Profile Popover */}
-            <Popover
-              open={profileOpen}
-              anchorEl={profileAnchor}
-              onClose={handleProfileClose}
-              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-              transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-              PaperProps={{
-                sx: {
-                  mt: 0.5,
-                  borderRadius: '12px',
-                  width: 200,          // fixed width
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-                  border: '0.5px solid',
-                  borderColor: 'divider',
-                  overflow: 'hidden',
-                  backgroundColor: 'background.paper',
-                  p: 0,
-                }
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 1.75, py: 1.25 }}>
-                <Box sx={{ width: 36, height: 36, flexShrink: 0 }}>  {/* wrapper — Avatar stretch oldini oladi */}
-                  <Avatar sx={{
-                    width: 36, height: 36,
-                    borderRadius: '50%',
-                    backgroundColor: 'rgba(107,75,232,0.15)',
-                    color: '#7C3AED',
-                    fontSize: 14,
-                    fontWeight: 700,
-                  }}>
-                    {(userRole || 'U').charAt(0).toUpperCase()}
-                  </Avatar>
-                </Box>
-                <Typography sx={{
-                  fontWeight: 700,
-                  fontSize: 13,
-                  color: 'text.primary',
-                  letterSpacing: '0.6px',
-                  textTransform: 'uppercase',
-                }}>
-                  {roleLabel}
-                </Typography>
-              </Box>
+              {/* Custom Profile Dropdown */}
+              {isProfileDropdownOpen && (
+                <>
+                  <div
+                    style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 998 }}
+                    onClick={closeProfileDropdown}
+                  />
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '120%',
+                      right: 0,
+                      width: '200px',
+                      backgroundColor: mode === 'dark' ? '#1E293B' : '#FFFFFF',
+                      borderRadius: '16px',
+                      boxShadow: mode === 'dark' ? '0 10px 40px rgba(0,0,0,0.5)' : '0 10px 40px rgba(0,0,0,0.08)',
+                      border: `1px solid ${mode === 'dark' ? '#334155' : '#E2E8F0'}`,
+                      zIndex: 999,
+                      overflow: 'hidden',
+                      animation: 'customFadeInDown 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+                      transformOrigin: 'top right'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '10px' }}>
+                      <div style={{
+                        width: '46px', height: '46px', borderRadius: '50%',
+                        backgroundColor: 'rgba(107,75,232,0.1)', color: '#6B4BE8',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '18px', fontWeight: '700', flexShrink: 0
+                      }}>
+                        {(userRole || 'U').charAt(0).toUpperCase()}
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontSize: '15px', fontWeight: '700', color: mode === 'dark' ? '#F8FAFC' : '#0F172A', letterSpacing: '0.5px' }}>
+                          {roleLabel}
+                        </span>
+                        <span style={{ fontSize: '12px', fontWeight: '500', color: mode === 'dark' ? '#94A3B8' : '#64748B' }}>
+                          {userRole === 'TEACHER' ? 'O\'qituvchi' : userRole === 'STUDENT' ? 'Talaba' : 'Admin'}
+                        </span>
+                      </div>
+                    </div>
 
-              <Box sx={{ height: '0.5px', backgroundColor: 'divider' }} />
+                    <div style={{ height: '1px', backgroundColor: mode === 'dark' ? '#334155' : '#F1F5F9', width: '100%' }} />
 
-              <Box
-                onClick={() => {
-                  handleProfileClose();
-                  localStorage.clear();
-                  navigate('/login');
-                }}
-                sx={{
-                  display: 'flex', alignItems: 'center', gap: 1.25,
-                  px: 1.75, py: 1.25,
-                  cursor: 'pointer',
-                  '&:hover': {
-                    backgroundColor: mode === 'dark' ? 'rgba(239,68,68,0.08)' : '#FEF2F2'
-                  }
-                }}
-              >
-                <LogoutOutlined sx={{ fontSize: 17, color: '#EF4444' }} />
-                <Typography sx={{ fontWeight: 600, fontSize: 13, color: '#EF4444' }}>
-                  Chiqish
-                </Typography>
-              </Box>
-            </Popover>
+                    <div
+                      onClick={() => {
+                        closeProfileDropdown();
+                        localStorage.clear();
+                        navigate('/login');
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = mode === 'dark' ? 'rgba(239,68,68,0.1)' : '#FEF2F2';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                      }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '12px',
+                        padding: '16px', cursor: 'pointer',
+                        transition: 'background-color 0.2s ease',
+                        color: '#EF4444'
+                      }}
+                    >
+                      <LogoutOutlined sx={{ fontSize: '20px' }} />
+                      <span style={{ fontWeight: '600', fontSize: '14px' }}>Chiqish</span>
+                    </div>
+                  </div>
+                </>
+              )}
+            </Box>
           </Box>
         </Box>
 

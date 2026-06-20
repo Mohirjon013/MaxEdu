@@ -73,7 +73,7 @@ export default function Dashboard() {
   useEffect(() => {
     const role = localStorage.getItem('role');
     if (role === 'TEACHER') {
-      navigate('/dashboard/teacher-groups');
+      navigate('/dashboard/groups');
     } else if (role === 'STUDENT') {
       navigate('/dashboard/student-main');
     }

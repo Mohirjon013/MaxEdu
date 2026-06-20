@@ -10,6 +10,7 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import MicIcon from '@mui/icons-material/Mic';
 import axiosClient from '../api/axios';
 import Loader from './Loader';
+import ErrorModal from './ErrorModal';
 
 function HomeworkCheck() {
   const { id, hwId, studentId } = useParams();
@@ -23,6 +24,7 @@ function HomeworkCheck() {
   const [comment, setComment] = useState('');
   const [teacherFile, setTeacherFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorModal, setErrorModal] = useState({ open: false, message: "" });
 
   const fileInputRef = useRef(null);
 
@@ -88,7 +90,7 @@ function HomeworkCheck() {
       navigate(-1);
     } catch (error) {
       console.error(error);
-      alert('Saqlashda xatolik yuz berdi');
+      setErrorModal({ open: true, message: `Saqlashda xatolik yuz berdi: ${error.response?.data?.message || error.message}` });
     } finally {
       setIsSubmitting(false);
     }
@@ -150,8 +152,17 @@ function HomeworkCheck() {
           <Box>
             <Typography sx={{ color: '#94a3b8', fontSize: '13px', mb: 0.5, fontWeight: 500 }}>Status:</Typography>
             <Chip
-              label={result?.status === 'PENDING' ? 'Kutayabti' : (result?.status || 'Kutayabti')}
-              sx={{ bgcolor: '#f3f0ff', color: '#7C3AED', fontWeight: 600, borderRadius: '4px', height: '24px', fontSize: '13px' }}
+              label={
+                result?.status === 'PENDING' ? 'Kutayabti' : 
+                result?.status === 'ACCEPTED' ? 'Qabul qilingan' : 
+                result?.status === 'REJECTED' ? 'Qaytarilgan' : 
+                (result?.status || 'Kutayabti')
+              }
+              sx={{ 
+                bgcolor: result?.status === 'ACCEPTED' ? '#d1fae5' : result?.status === 'REJECTED' ? '#fef3c7' : '#f3f0ff', 
+                color: result?.status === 'ACCEPTED' ? '#059669' : result?.status === 'REJECTED' ? '#d97706' : '#7C3AED', 
+                fontWeight: 600, borderRadius: '4px', height: '24px', fontSize: '13px' 
+              }}
             />
           </Box>
         </Box>
@@ -192,130 +203,171 @@ function HomeworkCheck() {
       </Paper>
 
       {/* Grade Submission Box */}
-      <Paper sx={{ p: 4, borderRadius: '12px', border: '1px solid #e5e7eb', boxShadow: 'none' }}>
-        {/* Info Alert */}
-        <Box sx={{ bgcolor: '#eff6ff', border: '1px solid #bfdbfe', p: 2, borderRadius: '8px', display: 'flex', alignItems: 'flex-start', gap: 1.5, mb: 4 }}>
-          <InfoIcon sx={{ color: '#3b82f6', mt: 0.2 }} />
-          <Typography sx={{ fontSize: '14px', fontWeight: 500, color: '#1e40af' }}>
-            60-100 oraliq'ida ball qo'yilgan vazifa 'Qabul qilingan', 0-59 oraliq'ida ball qo'yilgan vazifa 'Qaytarilgan' hisoblanadi.
+      {result?.status === 'ACCEPTED' || result?.status === 'REJECTED' || result?.status === 'Qabul qilingan' || result?.status === 'Qaytarilgan' ? (
+        <Paper sx={{ p: 4, borderRadius: '12px', border: '1px solid #e5e7eb', boxShadow: 'none' }}>
+          <Typography sx={{ fontWeight: 700, color: '#111827', fontSize: '18px', mb: 2 }}>
+            Tekshirilgan
           </Typography>
-        </Box>
+          <Typography sx={{ color: '#64748b', fontSize: '14px', mb: 3 }}>
+            Ushbu uyga vazifa tekshirilgan va unga baho berilgan. Dastlabki holatini faqat ko'rishingiz mumkin, o'zgartirish kiritish imkonsiz.
+          </Typography>
 
-        {/* Ball Slider */}
-        <Typography sx={{ fontWeight: 700, color: '#111827', fontSize: '16px', mb: 3 }}>Ball</Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 5, px: 1 }}>
-          <Box sx={{ flex: 1, position: 'relative' }}>
-            <Slider
-              value={score}
-              onChange={(e, val) => setScore(val)}
-              min={0} max={100}
+          <Box sx={{ mt: 2, pt: 3, borderTop: '1px solid #e5e7eb' }}>
+            {(() => {
+              const teacherGrade = result?.result?.grade ?? result?.check?.grade ?? result?.homework_result?.grade ?? result?.grade ?? result?.score;
+              const teacherComment = result?.result?.title || result?.result?.comment || result?.check?.title || result?.check?.comment || result?.homework_result?.title || result?.homework_result?.comment || result?.teacher_comment;
+              
+              return (
+                <Box>
+                  <Typography sx={{ color: '#111827', fontSize: '16px', fontWeight: 600, mb: 1 }}>
+                    O'qituvchi izohi:
+                  </Typography>
+                  <Typography sx={{ color: '#3b82f6', fontSize: '15px', fontWeight: 500, mb: 3, wordBreak: 'break-word' }}>
+                    {teacherComment || "Izoh mavjud emas"}
+                  </Typography>
+
+                  {teacherGrade !== undefined && teacherGrade !== null && (
+                    <Typography sx={{ color: '#111827', fontSize: '16px', fontWeight: 600 }}>
+                      Qo'yilgan ball: <span style={{ color: '#7C3AED' }}>{teacherGrade}</span>
+                    </Typography>
+                  )}
+                </Box>
+              );
+            })()}
+          </Box>
+        </Paper>
+      ) : (
+        <Paper sx={{ p: 4, borderRadius: '12px', border: '1px solid #e5e7eb', boxShadow: 'none' }}>
+          {/* Info Alert */}
+          <Box sx={{ bgcolor: '#eff6ff', border: '1px solid #bfdbfe', p: 2, borderRadius: '8px', display: 'flex', alignItems: 'flex-start', gap: 1.5, mb: 4 }}>
+            <InfoIcon sx={{ color: '#3b82f6', mt: 0.2 }} />
+            <Typography sx={{ fontSize: '14px', fontWeight: 500, color: '#1e40af' }}>
+              60-100 oraliq'ida ball qo'yilgan vazifa 'Qabul qilingan', 0-59 oraliq'ida ball qo'yilgan vazifa 'Qaytarilgan' hisoblanadi.
+            </Typography>
+          </Box>
+
+          {/* Ball Slider */}
+          <Typography sx={{ fontWeight: 700, color: '#111827', fontSize: '16px', mb: 3 }}>Ball</Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 5, px: 1 }}>
+            <Box sx={{ flex: 1, position: 'relative' }}>
+              <Slider
+                value={score}
+                onChange={(e, val) => setScore(val)}
+                min={0} max={100}
+                sx={{
+                  color: '#7C3AED',
+                  height: 8,
+                  '& .MuiSlider-thumb': { bgcolor: '#fff', border: '2px solid #7C3AED', width: 24, height: 24 },
+                  '& .MuiSlider-track': { border: 'none' },
+                  '& .MuiSlider-rail': { bgcolor: '#e2e8f0', opacity: 1 }
+                }}
+              />
+              <Typography sx={{ position: 'absolute', bottom: -24, left: '50%', transform: 'translateX(-50%)', color: '#64748b', fontSize: '13px', fontWeight: 600 }}>
+                O'tish bali
+              </Typography>
+            </Box>
+            <Box sx={{ border: '1px solid #e2e8f0', borderRadius: '8px', width: '64px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#111827', fontSize: '16px' }}>
+              {score}
+            </Box>
+          </Box>
+
+          {/* File Upload Box */}
+          <Typography sx={{ fontWeight: 700, color: '#111827', fontSize: '16px', mb: 2 }}>Fayllar</Typography>
+          <Box
+            sx={{
+              border: '1.5px dashed #7C3AED',
+              borderRadius: '12px',
+              p: 4,
+              textAlign: 'center',
+              mb: 4,
+              cursor: 'pointer',
+              bgcolor: '#f5f3ff',
+              transition: 'all 0.2s',
+              '&:hover': { bgcolor: '#ede9fe' }
+            }}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <CloudUploadIcon sx={{ fontSize: '48px', color: '#7C3AED', mb: 1 }} />
+            <Typography sx={{ color: '#111827', fontWeight: 500, fontSize: '15px', mb: 1 }}>
+              {teacherFile ? teacherFile.name : "Faylni yuklash uchun ushbu hudud ustiga bosing yoki faylni shu yerga olib keling"}
+            </Typography>
+            {!teacherFile && (
+              <Typography sx={{ color: '#94a3b8', fontSize: '13px' }}>
+                .jpg, .png, .pdf, .mp4, .docs formatlaridan birida bo'lishi mumkin
+              </Typography>
+            )}
+            <input type="file" hidden ref={fileInputRef} onChange={handleFileChange} />
+          </Box>
+
+          {/* Comment Textarea */}
+          <Box sx={{ position: 'relative', mb: 3 }}>
+            <TextField
+              fullWidth
+              multiline
+              rows={3}
+              placeholder="Izohingiz"
+              value={comment}
+              onChange={e => setComment(e.target.value)}
               sx={{
-                color: '#7C3AED',
-                height: 8,
-                '& .MuiSlider-thumb': { bgcolor: '#fff', border: '2px solid #7C3AED', width: 24, height: 24 },
-                '& .MuiSlider-track': { border: 'none' },
-                '& .MuiSlider-rail': { bgcolor: '#e2e8f0', opacity: 1 }
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '12px',
+                  bgcolor: '#f8fafc',
+                  '& fieldset': { borderColor: '#e2e8f0' },
+                  '&:hover fieldset': { borderColor: '#cbd5e1' },
+                  '&.Mui-focused fieldset': { borderColor: '#7C3AED' },
+                  paddingBottom: '40px'
+                }
               }}
             />
-            <Typography sx={{ position: 'absolute', bottom: -24, left: '50%', transform: 'translateX(-50%)', color: '#64748b', fontSize: '13px', fontWeight: 600 }}>
-              O'tish bali
-            </Typography>
+            <Box sx={{ position: 'absolute', bottom: 12, right: 12, bgcolor: '#7C3AED', borderRadius: '50%', p: 0.5, display: 'flex', cursor: 'pointer' }}>
+              <MicIcon sx={{ color: '#fff', fontSize: '20px' }} />
+            </Box>
           </Box>
-          <Box sx={{ border: '1px solid #e2e8f0', borderRadius: '8px', width: '64px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#111827', fontSize: '16px' }}>
-            {score}
+
+          {/* Buttons */}
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+            <Button
+              variant="outlined"
+              onClick={() => navigate(-1)}
+              sx={{
+                color: '#64748b',
+                borderColor: '#e2e8f0',
+                borderRadius: '8px',
+                textTransform: 'none',
+                fontWeight: 600,
+                px: 3,
+                '&:hover': { borderColor: '#cbd5e1', bgcolor: '#f8fafc' }
+              }}
+            >
+              Bekor qilish
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              sx={{
+                bgcolor: '#7C3AED',
+                color: '#fff',
+                borderRadius: '8px',
+                textTransform: 'none',
+                fontWeight: 600,
+                px: 4,
+                boxShadow: 'none',
+                '&:hover': { bgcolor: '#6D28D9', boxShadow: 'none' },
+                '&.Mui-disabled': { bgcolor: '#c4b5fd', color: '#fff' }
+              }}
+            >
+              {isSubmitting ? <CircularProgress size={20} color="inherit" /> : 'Yuborish'}
+            </Button>
           </Box>
-        </Box>
+        </Paper>
+      )}
 
-        {/* File Upload Box */}
-        <Typography sx={{ fontWeight: 700, color: '#111827', fontSize: '16px', mb: 2 }}>Fayllar</Typography>
-        <Box
-          sx={{
-            border: '1.5px dashed #7C3AED',
-            borderRadius: '12px',
-            p: 4,
-            textAlign: 'center',
-            mb: 4,
-            cursor: 'pointer',
-            bgcolor: '#f5f3ff',
-            transition: 'all 0.2s',
-            '&:hover': { bgcolor: '#ede9fe' }
-          }}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          <CloudUploadIcon sx={{ fontSize: '48px', color: '#7C3AED', mb: 1 }} />
-          <Typography sx={{ color: '#111827', fontWeight: 500, fontSize: '15px', mb: 1 }}>
-            {teacherFile ? teacherFile.name : "Faylni yuklash uchun ushbu hudud ustiga bosing yoki faylni shu yerga olib keling"}
-          </Typography>
-          {!teacherFile && (
-            <Typography sx={{ color: '#94a3b8', fontSize: '13px' }}>
-              .jpg, .png, .pdf, .mp4, .docs formatlaridan birida bo'lishi mumkin
-            </Typography>
-          )}
-          <input type="file" hidden ref={fileInputRef} onChange={handleFileChange} />
-        </Box>
-
-        {/* Comment Textarea */}
-        <Box sx={{ position: 'relative', mb: 3 }}>
-          <TextField
-            fullWidth
-            multiline
-            rows={3}
-            placeholder="Izohingiz"
-            value={comment}
-            onChange={e => setComment(e.target.value)}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '12px',
-                bgcolor: '#f8fafc',
-                '& fieldset': { borderColor: '#e2e8f0' },
-                '&:hover fieldset': { borderColor: '#cbd5e1' },
-                '&.Mui-focused fieldset': { borderColor: '#7C3AED' },
-                paddingBottom: '40px'
-              }
-            }}
-          />
-          <Box sx={{ position: 'absolute', bottom: 12, right: 12, bgcolor: '#7C3AED', borderRadius: '50%', p: 0.5, display: 'flex', cursor: 'pointer' }}>
-            <MicIcon sx={{ color: '#fff', fontSize: '20px' }} />
-          </Box>
-        </Box>
-
-        {/* Buttons */}
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-          <Button
-            variant="outlined"
-            onClick={() => navigate(-1)}
-            sx={{
-              color: '#64748b',
-              borderColor: '#e2e8f0',
-              borderRadius: '8px',
-              textTransform: 'none',
-              fontWeight: 600,
-              px: 3,
-              '&:hover': { borderColor: '#cbd5e1', bgcolor: '#f8fafc' }
-            }}
-          >
-            Bekor qilish
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            sx={{
-              bgcolor: '#7C3AED',
-              color: '#fff',
-              borderRadius: '8px',
-              textTransform: 'none',
-              fontWeight: 600,
-              px: 4,
-              boxShadow: 'none',
-              '&:hover': { bgcolor: '#6D28D9', boxShadow: 'none' },
-              '&.Mui-disabled': { bgcolor: '#c4b5fd', color: '#fff' }
-            }}
-          >
-            {isSubmitting ? <CircularProgress size={20} color="inherit" /> : 'Yuborish'}
-          </Button>
-        </Box>
-      </Paper>
+      <ErrorModal
+        open={errorModal.open}
+        onClose={() => setErrorModal({ ...errorModal, open: false })}
+        message={errorModal.message}
+      />
     </Box>
   );
 }

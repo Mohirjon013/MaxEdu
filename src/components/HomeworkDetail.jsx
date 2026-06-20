@@ -191,10 +191,10 @@ function HomeworkDetail() {
                       key={studentId ? `hw-sub-${studentId}-${index}` : `hw-sub-idx-${index}`}
                       sx={{
                         '&:last-child td, &:last-child th': { border: 0 },
-                        cursor: activeTab === 0 ? 'pointer' : 'default',
-                        '&:hover': { bgcolor: activeTab === 0 ? '#f8fafc' : 'inherit' }
+                        cursor: activeTab !== 3 ? 'pointer' : 'default',
+                        '&:hover': { bgcolor: activeTab !== 3 ? '#f8fafc' : 'inherit' }
                       }}
-                      onClick={() => activeTab === 0 && navigate(`/dashboard/groups/${id}/homework/${hwId}/result/${studentId}`)}
+                      onClick={() => activeTab !== 3 && navigate(`/dashboard/groups/${id}/homework/${hwId}/result/${studentId}`)}
                     >
                       <TableCell sx={{ color: '#1e293b', fontWeight: 500, fontSize: '14px', py: 2.5, borderBottom: '1px solid #f1f5f9' }}>
                         {sub.student?.full_name || sub.students?.full_name || sub.full_name || 'Noma\'lum o\'quvchi'}

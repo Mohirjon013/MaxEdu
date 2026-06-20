@@ -44,59 +44,45 @@ const StudentLessonDetail = () => {
     }, [id]);
 
     useEffect(() => {
-        const fetchVideos = async () => {
+        const fetchLessonData = async () => {
             if (!id || !lessonId) return;
-
-            // Check if the current lesson actually has videos
-            const currentLesson = lessons.find(l => l.id === Number(lessonId));
-            if (currentLesson && currentLesson.videoCount === 0) {
-                setActiveVideos([]);
-                setSelectedVideo(null);
-                return;
-            }
 
             setVideosLoading(true);
-            try {
-                const res = await axiosClient.get(`/groups/${id}/lessons/${lessonId}/videos`);
-                const vids = res.data.data || [];
-                console.log("Videos keldi:", vids);
-                setActiveVideos(vids);
-                if (vids.length > 0) {
-                    setSelectedVideo(vids[0]); // 1-videoni avtomatik tanlash
+            setHomeworkLoading(true);
+
+            Promise.allSettled([
+                axiosClient.get(`/groups/${id}/lessons/${lessonId}/videos`),
+                axiosClient.get(`/groups/${id}/lessons/${lessonId}/homeworks`)
+            ]).then(([videosRes, homeworksRes]) => {
+                // Handle Videos
+                if (videosRes.status === 'fulfilled') {
+                    const vids = videosRes.value.data?.data || [];
+                    setActiveVideos(vids);
+                    if (vids.length > 0) {
+                        setSelectedVideo(vids[0]);
+                    } else {
+                        setSelectedVideo(null);
+                    }
                 } else {
+                    console.error("Error fetching videos:", videosRes.reason);
+                    setActiveVideos([]);
                     setSelectedVideo(null);
                 }
-            } catch (error) {
-                console.error("Error fetching videos:", error);
-                setActiveVideos([]);
-                setSelectedVideo(null);
-            } finally {
+
+                // Handle Homeworks
+                if (homeworksRes.status === 'fulfilled') {
+                    setHomeworkData(homeworksRes.value.data?.data || null);
+                } else {
+                    console.error("Error fetching homework:", homeworksRes.reason);
+                    setHomeworkData(null);
+                }
+            }).finally(() => {
                 setVideosLoading(false);
-            }
-        };
-
-        if (lessons.length > 0) {
-            fetchVideos();
-        }
-    }, [id, lessonId, lessons]);
-
-    useEffect(() => {
-        const fetchHomework = async () => {
-            if (!id || !lessonId) return;
-            setHomeworkLoading(true);
-            setHomeworkData(null);
-            try {
-                const res = await axiosClient.get(`/groups/${id}/lessons/${lessonId}/homeworks`);
-                console.log("Homework datasi keldi:", res.data);
-                setHomeworkData(res.data.data || null);
-            } catch (error) {
-                console.error("Error fetching homework:", error);
-                setHomeworkData(null);
-            } finally {
                 setHomeworkLoading(false);
-            }
+            });
         };
-        fetchHomework();
+
+        fetchLessonData();
     }, [id, lessonId]);
 
     const formatDateCustom = (dateString) => {

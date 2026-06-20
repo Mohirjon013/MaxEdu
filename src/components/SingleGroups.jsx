@@ -47,12 +47,13 @@ function SingleGroups() {
 
   useEffect(() => {
     async function fetchGroup() {
-      if (group) return; // Optimallashtirish: agar ma'lumot allaqachon bo'lsa, keraksiz so'rov yubormaslik
       try {
-        const res = await axiosClient.get(`/groups/one/${id}`);
+        const role = localStorage.getItem("role");
+        const endpoint = role === "TEACHER" ? `/groups/${id}` : `/groups/one/${id}`;
+        const res = await axiosClient.get(endpoint);
         const rawData = res.data?.data || res.data;
         const actualGroup = Array.isArray(rawData) ? rawData[0] : (rawData.group || rawData);
-        setGroup(actualGroup);
+        setGroup((prev) => ({ ...prev, ...actualGroup }));
       } catch (error) {
         console.error(error);
       }
